@@ -1,0 +1,4 @@
+name: example
+size: 4
+weights: -4 -2 3 5
+threshold: -3
