@@ -38,15 +38,10 @@ class Classifier:
             "threshold": self.threshold
         }
         
-
-    
     def lowerbound(self):
     	intweights = [int(x) for x in self.weights]
     	print(sum(i for i in intweights if i<0))
-    	
-    	
-    	
-    	
+
     def upperbound(self):
     	intweights = [int(x) for x in self.weights]
     	print(sum(i for i in intweights if i>0))
@@ -65,8 +60,8 @@ class Classifier:
         newsize -= 1
         self.size = str(newsize)
         str(self.size)
-
         self.weights = intweight
+
 
     def raiselowerbound(self):
         intweights = [int(x) for x in self.weights]
@@ -78,6 +73,7 @@ class Classifier:
         self.size = str(newsize)
         str(self.size)
         self.weights = intweight
+
 
     def lowerthreshold(self):
         intweights = [int(x) for x in self.weights]
@@ -108,6 +104,7 @@ class Classifier:
         self.size = str(newsize)
         str(self.weights)
     
+
     def minimizebothbounds(self):
         intweights = [int(x) for x in self.weights]
         intweights.sort()
@@ -120,6 +117,7 @@ class Classifier:
         str(self.size)
         self.weights = intweight
 
+
     def checktriviality(self):
         thresh = int(self.threshold)
         intweights = [int(x) for x in self.weights]
@@ -129,11 +127,139 @@ class Classifier:
         if upperbound < thresh:
             print("This threshold test is trivially false")
         
-        if lowerbound > thresh:
+        if lowerbound >= thresh:
             print("This threshold test is trivially true")
-    	
+    	 
+
+    #automize finding the fastest way to make a test trivially true and false
+    def fasttriviallytrue(self):
+        intweights = [int(x) for x in self.weights]
+        intweights2 = [int(x) for x in self.weights]
+        absintweights = [abs(x) for x in intweights]
+        
+        twointweights = [int(x) for x in self.weights], [0 for x in self.weights]
+        thresh = int(self.threshold)
+
+        lowerbound = sum(i for i in intweights if i<0)
+        count = 0
+
+        while True:
+            count += 1
+            maxnum = max(absintweights)
+            maxindex = absintweights.index(maxnum)
+            
+    
+            if intweights[maxindex] > 0:
+                
+                print(count, "Set" , intweights[maxindex] , "to 1") 
+                twointweights[1][maxindex] = 1
+                thresh -= maxnum
+        
+            if intweights[maxindex] < 0:
+                
+                print(count,"Set" , intweights[maxindex] , "to 0")
+                twointweights[1][maxindex] = 0
+
+            absintweights.pop(maxindex)
+            intweights2.pop(maxindex)
+            lowerbound = sum(i for i in intweights2 if i<0)
+
+            if lowerbound >= thresh:
+                break
+
+        for i in twointweights:
+            for j in i:
+                print(j, end = " ")
+            print()
+        
+    def fastmove(self):
+        intweights = [int(x) for x in self.weights]
+        intweights2 = [int(x) for x in self.weights]
+        absintweights = [abs(x) for x in intweights]
+        
+        twointweights = [int(x) for x in self.weights], [0 for x in self.weights]
+        thresh = int(self.threshold)
+
+        lowerbound = sum(i for i in intweights if i<0)
 
 
+        maxnum = max(absintweights)
+        maxindex = absintweights.index(maxnum)
+            
+    
+        if intweights[maxindex] > 0:
+                
+            print("Set" , intweights[maxindex] , "to 1") 
+            twointweights[1][maxindex] = 1
+            thresh -= maxnum
+        
+        if intweights[maxindex] < 0:
+                
+            print("Set" , intweights[maxindex] , "to 0")
+            twointweights[1][maxindex] = 0
+
+        absintweights.pop(maxindex)
+        intweights2.pop(maxindex)
+        lowerbound = sum(i for i in intweights2 if i<0)
+
+        for i in twointweights:
+            for j in i:
+                print(j, end = " ")
+            print()
+        
+
+        
+
+        
+
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+#intweights = [int(x) for x in self.weights]
+#        inst = {}
+#        twointweights = [int(x) for x in self.weights], [0 for x in self.weights]
+#        thresh = int(self.threshold)
+#        lowerbound = sum(i for i in intweights if i<0) 
+#        absweights = [abs(x) for x in intweights]
+#        absweights.sort()
+#        while lowerbound < thresh:
+#            mostneg = min(intweights)
+            #print(twointweights[1])
+#            if(mostneg < 0):
+#                lowerbound -= mostneg
+                   
+
+#            inde = intweights.index(mostneg)
+
+#            twointweights[1][inde] = 1
+
+#            inst[inde+1] = 1
+            
+
+#            col = len(self.weights)
+#            row = 2
+#            for j in range(col):
+#                for i in range(row):
+#                    if(twointweights[col][row] == mostneg):
+#                        twointweights[col][row+1] = 1
+                    
+#        print(twointweights[0])
+#        print(twointweights[1])
+#        print(inst)
+
+
+
+        
 
         
 
@@ -263,6 +389,69 @@ class Classifier:
         for node in last_level:
             last_level[node] = node >= threshold
         return self._to_obdd(matrix)
+
+
+class IntClassifier(Classifier):
+    def __init__(self,name="none",size=0,weights=[],threshold=0):
+        super().__init__(name=name,size=size,weights=weights,threshold=threshold)
+        self.size = int(size)
+        self.weights = [int(x) for x in weights]
+        self.threshold = int(threshold)
+
+    def __repr__(self):
+        st = []
+        st.append("name: %s" % self.name)
+        st.append("size: %d" % self.size)
+        st.append("weights: %s" % " ".join(str(weight) for weight in self.weights))
+        st.append("threshold: %d" % self.threshold)
+        return "\n".join(st)
+      
+    @staticmethod
+    def read(filename):
+        classifier = Classifier.read(filename)
+        return IntClassifier(name=classifier.name,
+                             size=classifier.size,
+                             weights=classifier.weights,
+                             threshold=classifier.threshold)
+
+    def lowerbound(self):
+    	print(sum(i for i in self.weights if i<0))
+
+    def upperbound(self):
+    	
+    	print(sum(i for i in self.weights if i>0))
+
+    def lowerupperbound(self):
+        intweights = self.weights
+
+        intweights.sort() 
+
+        intweights.pop(0)
+
+        intweight = intweights
+
+        newsize = self.size
+        newsize -= 1
+        self.size = newsize
+        self.weights = intweight
+    
+    
+
+
+
+
+
+
+
+    
+    
+
+    
+        
+        
+
+
+        
 
 if __name__ == '__main__':
     precision = 2
