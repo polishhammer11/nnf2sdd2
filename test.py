@@ -20,7 +20,10 @@ if __name__ == '__main__':
     obdd_manager,node = c.compile()
     for model in node.models():
         print_model(model)
-    
+    print()
+    print("Fastest")
+    c.fasttriviallytrue()
+    print()
     
     while True:
         print("=== Lower Bound:")
@@ -29,6 +32,7 @@ if __name__ == '__main__':
         print("=== Upper Bound:")
         c.upperbound()
         print()
+        c.fastmove()
         c.checktriviality()
         print()
     
@@ -37,7 +41,6 @@ if __name__ == '__main__':
         print("2. Raise Lower Bound")
         print("3. Lower threshold")
         print("4. Raise threshold")
-        #Add check for trivially false and trivially true
         choice = input()
 
 
@@ -78,6 +81,8 @@ if __name__ == '__main__':
         c.upperbound()
         if(c.size=="0"):
             break
+        
+
         
         
     
