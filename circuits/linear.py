@@ -133,6 +133,8 @@ class Classifier:
 
     #automize finding the fastest way to make a test trivially true and false
     def fasttriviallytrue(self):
+        #import pdb; pdb.set_trace()
+
         intweights = [int(x) for x in self.weights]
         intweights2 = [int(x) for x in self.weights]
         absintweights = [abs(x) for x in intweights]
@@ -142,6 +144,9 @@ class Classifier:
 
         lowerbound = sum(i for i in intweights if i<0)
         count = 0
+        
+    
+                
 
         while True:
             count += 1
@@ -154,15 +159,21 @@ class Classifier:
                 print(count, "Set" , intweights[maxindex] , "to 1") 
                 twointweights[1][maxindex] = 1
                 thresh -= maxnum
+                #intweights2.pop(maxindex)
+                intweights2[maxindex] = 0
+                absintweights[maxindex] = 0
+                
         
-            if intweights[maxindex] < 0:
+            else:
                 
                 print(count,"Set" , intweights[maxindex] , "to 0")
                 twointweights[1][maxindex] = 0
+                #intweights2.pop(maxindex)
 
-            absintweights.pop(maxindex)
-            intweights2.pop(maxindex)
-            lowerbound = sum(i for i in intweights2 if i<0)
+                intweights2[maxindex] = 0
+                absintweights[maxindex] = 0
+                #absintweights.pop(maxindex)
+                lowerbound = sum(i for i in intweights2 if i<0)
 
             if lowerbound >= thresh:
                 break
@@ -171,6 +182,8 @@ class Classifier:
             for j in i:
                 print(j, end = " ")
             print()
+
+        
         
     def fastmove(self):
         intweights = [int(x) for x in self.weights]
@@ -185,22 +198,24 @@ class Classifier:
 
         maxnum = max(absintweights)
         maxindex = absintweights.index(maxnum)
-            
+         
+   
+     
     
         if intweights[maxindex] > 0:
                 
             print("Set" , intweights[maxindex] , "to 1") 
             twointweights[1][maxindex] = 1
             thresh -= maxnum
-        
+            
         if intweights[maxindex] < 0:
                 
             print("Set" , intweights[maxindex] , "to 0")
             twointweights[1][maxindex] = 0
 
-        absintweights.pop(maxindex)
-        intweights2.pop(maxindex)
-        lowerbound = sum(i for i in intweights2 if i<0)
+            absintweights.pop(maxindex)
+            intweights2.pop(maxindex)
+            lowerbound = sum(i for i in intweights2 if i<0)
 
         for i in twointweights:
             for j in i:
@@ -436,7 +451,13 @@ class IntClassifier(Classifier):
         self.weights = intweight
     
     
+    def set_input(self,index,value):
+        # return a new copy of the classifier where the input index has been set to value
+        # return IntClassifier( ... )
+        pass
 
+    def find_max_input_index(self):
+        return index
 
 
 
