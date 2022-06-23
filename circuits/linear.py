@@ -5,6 +5,40 @@ from decimal import Decimal
 from .obdd import ObddManager, ObddNode
 from .timer import Timer
 
+class Inputs:
+    def __init__(self,weights=None):
+        if weights is None:
+            self.original_weights = []
+            self.weights = {}
+            self.setting = {}
+        else:
+            self.original_weights = weights
+            self.weights = { index:int(weight) for index,weight in enumerate(weights) }
+            self.setting = {}
+
+    def __repr__(self):
+        st = []
+        for index in self.weights:
+            weight = self.weights[index]
+            st.append("  input %d: weight %d" % (index,weight))
+        for index in self.setting:
+            value,weight = self.setting[index]
+            value = "None" if value is None else str(value)
+            st.append("  input %d: weight %d (set to %s)" % (index,weight,value))
+        return "\n".join(st)
+
+    def set(self,index,value):
+        assert index in self.weights
+        weight = self.weights[index]
+        del self.weights[index]
+        self.setting[index] = (value,weight)
+
+    def copy(self):
+        inputs = Inputs()
+        inputs.weights = dict(self.weights)
+        inputs.setting = dict(self.setting)
+        return inputs
+
 class Classifier:
     """For representing Andy's linear classifier (neuron) format."""
 
@@ -12,7 +46,8 @@ class Classifier:
                  #num_values="2",prior="0",offset="0"):
         self.name = name
         self.size = size
-        self.weights = weights
+        self.weights = weights # AC: this should disappear
+        self.inputs = Inputs(weights)
         self.threshold = threshold
         self.is_integer = self.check_integrality()
         # extra stuff from Andy's format
@@ -20,15 +55,24 @@ class Classifier:
         #self.prior = prior
         #self.offset  = offset
 
-
-
     def __repr__(self):
         st = []
         st.append("name: %s" % self.name)
         st.append("size: %s" % self.size)
         st.append("weights: %s" % " ".join(self.weights))
         st.append("threshold: %s" % self.threshold)
+        st.append("inputs:\n %s" % str(self.inputs))
         return "\n".join(st)
+
+    def copy(self):
+        name = self.name
+        size = self.size
+        weights = list(self.weights) # AC: remove this eventually
+        threshold = self.threshold
+        classifier = Classifier(name=name,size=size,weights=weights,
+                                threshold=threshold)
+        classifier.inputs = self.inputs.copy()
+        return classifier
 
     def dict(self):
         return {
@@ -37,6 +81,18 @@ class Classifier:
             "weights": list(self.weights),
             "threshold": self.threshold
         }
+
+
+    def set_input(self,index,value):
+        # return a new copy of the classifier where the input index has been set to value
+        # return IntClassifier( ... )
+
+        new_classifier = self.copy()
+        new_classifier.inputs.set(index,value)
+        size = int(new_classifier.size) - 1
+        new_classifier.size = str(size)
+        return new_classifier
+
         
     def lowerbound(self):
     	intweights = [int(x) for x in self.weights]
@@ -451,11 +507,6 @@ class IntClassifier(Classifier):
         self.weights = intweight
     
     
-    def set_input(self,index,value):
-        # return a new copy of the classifier where the input index has been set to value
-        # return IntClassifier( ... )
-        pass
-
     def find_max_input_index(self):
         return index
 

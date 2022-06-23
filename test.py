@@ -15,11 +15,20 @@ if __name__ == '__main__':
     #c = c.with_precision(3)
     #print("== quantized neuron:")
     #print(c)
+
+    """
+    print("===setting index 5 to 1")
+    a = c.set_input(5,1)
+    print(a)
+    print("===setting index 1 to None")
+    a = a.set_input(1,None)
+    print(a)
+    """
     
     print("")
     obdd_manager,node = c.compile()
-    for model in node.models():
-        print_model(model)
+    #for model in node.models():
+    #    print_model(model)
     print()
     print("Fastest")
     c.fasttriviallytrue()
