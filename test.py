@@ -8,7 +8,7 @@ def print_model(model):
 
 if __name__ == '__main__':
     filename = 'examples/example.neuron'
-    c = Classifier.read(filename)
+    c = IntClassifier.read(filename)
     print("=== INPUT NEURON:")
     print(c)
     assert c.is_integer
@@ -31,9 +31,9 @@ if __name__ == '__main__':
     #    print_model(model)
     print()
     print("Fastest")
-    c.fasttriviallytrue()
-    print()
-    
+    c.fast_trivially_true()
+
+    """
     while True:
         print("=== Lower Bound:")
         c.lowerbound()
@@ -90,19 +90,4 @@ if __name__ == '__main__':
         c.upperbound()
         if(c.size=="0"):
             break
-        
-
-        
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
-   
-
-    
+    """

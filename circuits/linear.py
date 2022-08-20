@@ -6,6 +6,10 @@ from .obdd import ObddManager, ObddNode
 from .timer import Timer
 
 class Inputs:
+    """AC: represent this as a priority queue?  This would 
+    make finding the max weight faster
+    """
+
     def __init__(self,weights=None):
         if weights is None:
             self.original_weights = []
@@ -13,7 +17,8 @@ class Inputs:
             self.setting = {}
         else:
             self.original_weights = weights
-            self.weights = { index:int(weight) for index,weight in enumerate(weights) }
+            self.weights = { index:int(weight) for index,weight \
+                             in enumerate(weights) }
             self.setting = {}
 
     def __repr__(self):
@@ -24,20 +29,37 @@ class Inputs:
         for index in self.setting:
             value,weight = self.setting[index]
             value = "None" if value is None else str(value)
-            st.append("  input %d: weight %d (set to %s)" % (index,weight,value))
+            st.append("  input %d: weight %d (set to %s)" % \
+                      (index,weight,value))
         return "\n".join(st)
-
-    def set(self,index,value):
-        assert index in self.weights
-        weight = self.weights[index]
-        del self.weights[index]
-        self.setting[index] = (value,weight)
 
     def copy(self):
         inputs = Inputs()
         inputs.weights = dict(self.weights)
         inputs.setting = dict(self.setting)
         return inputs
+
+    def set(self,index,value):
+        assert index in self.weights
+        weight = self.weights[index]
+        del self.weights[index]
+        self.setting[index] = (value,weight)
+        return weight
+
+    def get_biggest_weight(self):
+        """return weight with largest absolute value"""
+        if len(self.weights) == 0: return None
+        biggest_index,biggest_abs_weight = None,0
+        for index,weight in self.weights.items():
+            abs_weight = abs(weight)
+            if abs_weight >= biggest_abs_weight:
+                biggest_index = index
+                biggest_abs_weight = abs_weight
+        biggest_weight = self.weights[biggest_index]
+        return (biggest_index,biggest_weight)
+
+    def get_model(self):
+        return { index:value for index,(value,w) in self.setting.items() if value is not None }
 
 class Classifier:
     """For representing Andy's linear classifier (neuron) format."""
@@ -61,18 +83,8 @@ class Classifier:
         st.append("size: %s" % self.size)
         st.append("weights: %s" % " ".join(self.weights))
         st.append("threshold: %s" % self.threshold)
-        st.append("inputs:\n %s" % str(self.inputs))
+        st.append("inputs:\n%s" % str(self.inputs))
         return "\n".join(st)
-
-    def copy(self):
-        name = self.name
-        size = self.size
-        weights = list(self.weights) # AC: remove this eventually
-        threshold = self.threshold
-        classifier = Classifier(name=name,size=size,weights=weights,
-                                threshold=threshold)
-        classifier.inputs = self.inputs.copy()
-        return classifier
 
     def dict(self):
         return {
@@ -81,26 +93,6 @@ class Classifier:
             "weights": list(self.weights),
             "threshold": self.threshold
         }
-
-
-    def set_input(self,index,value):
-        # return a new copy of the classifier where the input index has been set to value
-        # return IntClassifier( ... )
-
-        new_classifier = self.copy()
-        new_classifier.inputs.set(index,value)
-        size = int(new_classifier.size) - 1
-        new_classifier.size = str(size)
-        return new_classifier
-
-        
-    def lowerbound(self):
-    	intweights = [int(x) for x in self.weights]
-    	print(sum(i for i in intweights if i<0))
-
-    def upperbound(self):
-    	intweights = [int(x) for x in self.weights]
-    	print(sum(i for i in intweights if i>0))
 
 
     def lowerupperbound(self):
@@ -173,71 +165,6 @@ class Classifier:
         str(self.size)
         self.weights = intweight
 
-
-    def checktriviality(self):
-        thresh = int(self.threshold)
-        intweights = [int(x) for x in self.weights]
-        lowerbound = sum(i for i in intweights if i<0)
-        upperbound = sum(i for i in intweights if i>0)
-
-        if upperbound < thresh:
-            print("This threshold test is trivially false")
-        
-        if lowerbound >= thresh:
-            print("This threshold test is trivially true")
-    	 
-
-    #automize finding the fastest way to make a test trivially true and false
-    def fasttriviallytrue(self):
-        #import pdb; pdb.set_trace()
-
-        intweights = [int(x) for x in self.weights]
-        intweights2 = [int(x) for x in self.weights]
-        absintweights = [abs(x) for x in intweights]
-        
-        twointweights = [int(x) for x in self.weights], [0 for x in self.weights]
-        thresh = int(self.threshold)
-
-        lowerbound = sum(i for i in intweights if i<0)
-        count = 0
-        
-    
-                
-
-        while True:
-            count += 1
-            maxnum = max(absintweights)
-            maxindex = absintweights.index(maxnum)
-            
-    
-            if intweights[maxindex] > 0:
-                
-                print(count, "Set" , intweights[maxindex] , "to 1") 
-                twointweights[1][maxindex] = 1
-                thresh -= maxnum
-                #intweights2.pop(maxindex)
-                intweights2[maxindex] = 0
-                absintweights[maxindex] = 0
-                
-        
-            else:
-                
-                print(count,"Set" , intweights[maxindex] , "to 0")
-                twointweights[1][maxindex] = 0
-                #intweights2.pop(maxindex)
-
-                intweights2[maxindex] = 0
-                absintweights[maxindex] = 0
-                #absintweights.pop(maxindex)
-                lowerbound = sum(i for i in intweights2 if i<0)
-
-            if lowerbound >= thresh:
-                break
-
-        for i in twointweights:
-            for j in i:
-                print(j, end = " ")
-            print()
 
         
         
@@ -465,6 +392,7 @@ class Classifier:
 class IntClassifier(Classifier):
     def __init__(self,name="none",size=0,weights=[],threshold=0):
         super().__init__(name=name,size=size,weights=weights,threshold=threshold)
+        assert self.is_integer
         self.size = int(size)
         self.weights = [int(x) for x in weights]
         self.threshold = int(threshold)
@@ -475,8 +403,11 @@ class IntClassifier(Classifier):
         st.append("size: %d" % self.size)
         st.append("weights: %s" % " ".join(str(weight) for weight in self.weights))
         st.append("threshold: %d" % self.threshold)
+        st.append("bounds: [%d,%d]" % \
+                  (self.lowerbound(),self.upperbound()))
+        st.append("inputs:\n%s" % str(self.inputs))
         return "\n".join(st)
-      
+
     @staticmethod
     def read(filename):
         classifier = Classifier.read(filename)
@@ -485,45 +416,73 @@ class IntClassifier(Classifier):
                              weights=classifier.weights,
                              threshold=classifier.threshold)
 
+    def copy(self):
+        name = self.name
+        size = self.size
+        weights = list(self.weights) # AC: remove this eventually
+        threshold = self.threshold
+        classifier = IntClassifier(name=name,size=size,
+                                   weights=weights,
+                                   threshold=threshold)
+        classifier.inputs = self.inputs.copy()
+        return classifier
+
+    def set_input(self,index,value):
+        """return a new copy of the classifier where the input index
+        has been set to value"""
+
+        new_classifier = self.copy()
+        weight = new_classifier.inputs.set(index,value)
+        new_classifier.size -= 1
+        if value != 0 and value is not None:
+            new_classifier.threshold -= value*weight
+        return new_classifier
+
+
     def lowerbound(self):
-    	print(sum(i for i in self.weights if i<0))
+        none_weights = [ weight for value,weight in self.inputs.setting.values() \
+                         if value is None ]
+        weights = none_weights + list(self.inputs.weights.values())
+        return sum(w for w in weights if w<0)
 
     def upperbound(self):
-    	
-    	print(sum(i for i in self.weights if i>0))
+        none_weights = [ weight for value,weight in self.inputs.setting.values() \
+                         if value is None ]
+        weights = none_weights + list(self.inputs.weights.values())
+        return sum(w for w in weights if w>0)
 
-    def lowerupperbound(self):
-        intweights = self.weights
+    def is_trivially_true(self):
+        return self.threshold <= self.lowerbound()
 
-        intweights.sort() 
+    def is_trivially_false(self):
+        return self.threshold > self.upperbound()
 
-        intweights.pop(0)
+    def fast_trivially_true(self):
+        """automize finding the fastest way to make a test trivially
+        true and false
 
-        intweight = intweights
+        """
 
-        newsize = self.size
-        newsize -= 1
-        self.size = newsize
-        self.weights = intweight
-    
-    
-    def find_max_input_index(self):
-        return index
+        if self.is_trivially_false():
+            print("already trivially false")
+            return
 
+        c = self
+        count = 0
+        while not c.is_trivially_true():
+            count += 1
+            index,weight = c.inputs.get_biggest_weight()
 
+            if weight > 0:
+                print(count, "Set" , weight , "to 1")
+                c = c.set_input(index,1)
+            else:
+                print(count, "Set" , weight , "to 0")
+                c = c.set_input(index,0)
 
-
-
-
-    
-    
-
-    
-        
-        
-
-
-        
+        print()
+        print("=== trivial classifier:")
+        print(c)
 
 if __name__ == '__main__':
     precision = 2
