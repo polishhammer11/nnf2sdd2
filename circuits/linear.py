@@ -484,6 +484,82 @@ class IntClassifier(Classifier):
         print("=== trivial classifier:")
         print(c)
 
+    def print_all_true_models(self,explanationsize):
+        
+        #import pdb;
+        #pdb.set_trace()
+        "recursive method that finds all true models in a thresold test"
+        c = self
+        
+        if c.is_trivially_true():
+            print()
+            print(c.inputs)
+            explanationsize.append(c)
+            return
+            
+
+        if c.is_trivially_false():
+            return 
+
+        index,weight = c.inputs.get_biggest_weight()
+        
+        a = c.set_input(index,1)
+        a.print_all_true_models(explanationsize)
+        
+        b = c.set_input(index,0)
+        b.print_all_true_models(explanationsize)
+
+    def print_all_false_models(self,explanationsize):
+        
+        #import pdb;
+        #pdb.set_trace()
+        "recursive method that finds all true models in a thresold test"
+        c = self
+        
+        if c.is_trivially_true():
+            return
+            
+
+        if c.is_trivially_false():
+            explanationsize.append(c)
+            return 
+
+        index,weight = c.inputs.get_biggest_weight()
+        
+        a = c.set_input(index,1)
+        a.print_all_false_models(explanationsize)
+        
+        b = c.set_input(index,0)
+        b.print_all_false_models(explanationsize)
+
+
+
+    def print_bounds_graph(self,passing,failing):
+        #import pdb;
+        #pdb.set_trace()
+        c = self
+        import matplotlib.pyplot as plt
+        x = [0]
+        y = [0]
+        for i in range(len(passing)):
+            x.append(i+1)
+            y.append(y[i] + 2**len(passing[i].inputs.weights))
+        f = 0
+        f += 2**c.size
+
+        x2 = [0] 
+        y2 = [f] 
+        for i in range(len(failing)):
+            x2.append(i+1)
+            y2.append(y2[i] - 2**len(failing[i].inputs.weights))
+        
+        plt.axhline(y = y2[len(failing)], color = 'red', linestyle = '--')
+        plt.plot(x,y,marker='o',markersize=3)
+        plt.plot(x2,y2,marker = 'o', markersize=3)
+        plt.show()
+        plt.plot(x2,y2,marker = 'o', markersize=3)
+
+
 if __name__ == '__main__':
     precision = 2
     #filename = 'examples/169_wd2_0'

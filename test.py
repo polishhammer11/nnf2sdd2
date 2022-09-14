@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 
 from circuits.linear import *
@@ -12,6 +13,8 @@ if __name__ == '__main__':
     print("=== INPUT NEURON:")
     print(c)
     assert c.is_integer
+    passing = []
+    failing = []
     #c = c.with_precision(3)
     #print("== quantized neuron:")
     #print(c)
@@ -30,9 +33,15 @@ if __name__ == '__main__':
     #for model in node.models():
     #    print_model(model)
     print()
-    print("Fastest")
-    c.fast_trivially_true()
+    print("Passing Tests")
+    #c.fast_trivially_true()
+    print(c.print_all_true_models(passing))
+    #passing.sort(key=lambda x: x.size, reverse = True)
+    c.print_all_false_models(failing)
+    #failing.sort(key=lambda x: x.size, reverse = True)
 
+    c.print_bounds_graph(passing,failing)
+    
     """
     while True:
         print("=== Lower Bound:")

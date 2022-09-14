@@ -1,5 +1,5 @@
 name: example
-size: 9
-weights: -4 -2 3 5 7 5 5 5 5 
-threshold: 15
+size: 8
+weights: -4 -2 3 5 4 5 -2 -3 
+threshold: 3
 
