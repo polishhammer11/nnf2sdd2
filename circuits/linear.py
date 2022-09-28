@@ -474,15 +474,17 @@ class IntClassifier(Classifier):
             index,weight = c.inputs.get_biggest_weight()
 
             if weight > 0:
-                print(count, "Set" , weight , "to 1")
+                #print(count, "Set" , weight , "to 1")
                 c = c.set_input(index,1)
             else:
-                print(count, "Set" , weight , "to 0")
+                #print(count, "Set" , weight , "to 0")
                 c = c.set_input(index,0)
 
-        print()
-        print("=== trivial classifier:")
-        print(c)
+        #print()
+        #print("=== trivial classifier:")
+        #print(c)
+        return c
+        
 
     def print_all_true_models(self,explanationsize):
         
@@ -493,7 +495,7 @@ class IntClassifier(Classifier):
         
         if c.is_trivially_true():
             print()
-            print(c.inputs)
+            #print(c.inputs)
             explanationsize.append(c)
             return
             
@@ -503,11 +505,19 @@ class IntClassifier(Classifier):
 
         index,weight = c.inputs.get_biggest_weight()
         
-        a = c.set_input(index,1)
-        a.print_all_true_models(explanationsize)
-        
-        b = c.set_input(index,0)
-        b.print_all_true_models(explanationsize)
+       
+        if(weight<0):
+            b = c.set_input(index,0)
+            b.print_all_true_models(explanationsize)
+
+            a = c.set_input(index,1)
+            a.print_all_true_models(explanationsize)
+        else:    
+            a = c.set_input(index,1)
+            a.print_all_true_models(explanationsize)
+
+            b = c.set_input(index,0)
+            b.print_all_true_models(explanationsize)
 
     def print_all_false_models(self,explanationsize):
         
@@ -525,12 +535,20 @@ class IntClassifier(Classifier):
             return 
 
         index,weight = c.inputs.get_biggest_weight()
-        
-        a = c.set_input(index,1)
-        a.print_all_false_models(explanationsize)
-        
-        b = c.set_input(index,0)
-        b.print_all_false_models(explanationsize)
+
+        if(weight<0):
+            b = c.set_input(index,1)
+            b.print_all_false_models(explanationsize)
+
+            a = c.set_input(index,0)
+            a.print_all_false_models(explanationsize)
+        else:    
+            a = c.set_input(index,0)
+            a.print_all_false_models(explanationsize)
+
+            b = c.set_input(index,1)
+            b.print_all_false_models(explanationsize)
+
 
 
 
@@ -554,10 +572,132 @@ class IntClassifier(Classifier):
             y2.append(y2[i] - 2**len(failing[i].inputs.weights))
         
         plt.axhline(y = y2[len(failing)], color = 'red', linestyle = '--')
-        plt.plot(x,y,marker='o',markersize=3)
-        plt.plot(x2,y2,marker = 'o', markersize=3)
-        plt.show()
-        plt.plot(x2,y2,marker = 'o', markersize=3)
+        plt.plot(x,y,marker='o',markersize=1)
+        plt.plot(x2,y2,marker = 'o', markersize=1)
+        #plt.show()
+
+    def a_star_search(self):
+        #import pdb;
+        #pdb.set_trace()
+        from queue import PriorityQueue
+        c = self
+        fq = PriorityQueue()
+        q = PriorityQueue()
+        count = 0
+        q.put((c.size,count,c))
+        
+        while(not q.empty()):
+            current = q.get()
+            current2 = current
+            if(current[2].is_trivially_false()):
+                continue
+            if(current[2].is_trivially_true()):
+                fq.put(current)
+                continue
+            else:
+                index,weight = current[2].inputs.get_biggest_weight()
+                count+=1
+                a = current[2].set_input(index,1)
+                q.put((len(a.inputs.setting),count,a))
+
+                b = current2[2].set_input(index,0)
+                count += 1
+                q.put((len(b.inputs.setting),count,b))
+                
+        return fq
+
+    def a_star_search_f(self):
+        #import pdb;
+        #pdb.set_trace()
+        from queue import PriorityQueue
+        c = self
+        fq = PriorityQueue()
+        q = PriorityQueue()
+        count = 0
+        q.put((c.size,count,c))
+        
+        while(not q.empty()):
+            current = q.get()
+            current2 = current
+            if(current[2].is_trivially_false()):
+                fq.put(current)
+                continue
+            if(current[2].is_trivially_true()):
+                continue
+            else:
+                index,weight = current[2].inputs.get_biggest_weight()
+                count+=1
+                a = current[2].set_input(index,1)
+                q.put((len(a.inputs.setting),count,a))
+
+                b = current2[2].set_input(index,0)
+                count += 1
+                q.put((len(b.inputs.setting),count,b))
+                
+        return fq
+
+    def a_star_graph(self,pq,fq):
+        import matplotlib.pyplot as plt
+        #import pdb
+        #pdb.set_trace()
+        x = [0]
+        y = [0]
+        x2 = [0]
+        y2 = [2**self.size]
+        count = 0
+        while(not pq.empty()):
+            current = pq.get()
+            y.append(y[count] + 2**len((current[2].inputs.weights)))
+            count += 1
+            x.append(count)
+        count = 0
+        while(not fq.empty()):
+            current = fq.get()
+            y2.append(y2[count] - 2**len((current[2].inputs.weights)))
+            count += 1
+            x2.append(count)
+            
+        plt.plot(x,y,marker='o',markersize=1)
+        plt.plot(x2,y2,marker='o',markersize=1)
+        #plt.show()
+
+            
+        
+        
+    
+
+
+            
+
+        
+        
+
+
+
+
+'''
+        while(len(q)>0):
+            current = p.pop()
+            if(c == self.fast_trivially_true()):
+                return c
+    
+            
+
+        c.print_all_true_models(passing)
+        for i in range(len(passing)):
+            q.append((passing[i].size,i, passing[i]))
+        q.sort(reverse=True)
+        while(not q):
+'''         
+            
+            
+
+        
+            
+
+        
+
+
 
 
 if __name__ == '__main__':

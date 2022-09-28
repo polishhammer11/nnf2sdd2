@@ -34,13 +34,30 @@ if __name__ == '__main__':
     #    print_model(model)
     print()
     print("Passing Tests")
-    #c.fast_trivially_true()
-    print(c.print_all_true_models(passing))
-    #passing.sort(key=lambda x: x.size, reverse = True)
-    c.print_all_false_models(failing)
-    #failing.sort(key=lambda x: x.size, reverse = True)
+    
+    #c.a_star_search(passing)
+    c.a_star_graph(c.a_star_search(),c.a_star_search_f())
 
-    c.print_bounds_graph(passing,failing)
+    c.print_all_true_models(passing) #using depth-first search
+    c.print_all_false_models(failing)#using depth-first search
+    c.print_bounds_graph(passing,failing) 
+
+
+
+    #passing.sort(key=lambda x: x.size, reverse = True) #best case sorted passing tests
+    #failing.sort(key=lambda x: x.size, reverse = True) #best case sorted failing tests
+    #c.print_bounds_graph(passing,failing)
+    
+
+    #passing.sort(key=lambda x: x.size)   #worst case sorted passing tests
+    #failing.sort(key=lambda x: x.size)   #worst case sorted failing tests
+    #c.print_bounds_graph(passing,failing)
+
+    #c.plot_true_explanation(passing)
+
+
+    import matplotlib.pyplot as plt
+    plt.show()
     
     """
     while True:
