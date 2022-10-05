@@ -9,10 +9,12 @@ def print_model(model):
 
 if __name__ == '__main__':
     filename = 'examples/example.neuron'
-    c = IntClassifier.read(filename)
+    congressdata = 'examples/file.txt'
+    c = IntClassifier.read(congressdata)
     print("=== INPUT NEURON:")
     print(c)
-    assert c.is_integer
+    
+    #assert c.is_integer
     passing = []
     failing = []
     #c = c.with_precision(3)
@@ -29,18 +31,27 @@ if __name__ == '__main__':
     """
     
     print("")
-    obdd_manager,node = c.compile()
+    #obdd_manager,node = c.compile()
     #for model in node.models():
     #    print_model(model)
     print()
-    print("Passing Tests")
-    
-    #c.a_star_search(passing)
-    c.a_star_graph(c.a_star_search(),c.a_star_search_f())
+    #print("Passing Tests")
 
-    c.print_all_true_models(passing) #using depth-first search
-    c.print_all_false_models(failing)#using depth-first search
-    c.print_bounds_graph(passing,failing) 
+
+
+    c.a_star_graph(c.a_star_search(), c.a_star_search_f())
+    #c.breadth_first_search()
+
+
+
+
+
+    #c.a_star_graph(c.breadth_first_search(),c.breadth_first_search_f()) #passing and failing models
+
+
+    #c.print_all_true_models(passing) #using depth-first search
+    #c.print_all_false_models(failing)#using depth-first search
+    #c.print_bounds_graph(passing,failing) 
 
 
 
@@ -52,8 +63,6 @@ if __name__ == '__main__':
     #passing.sort(key=lambda x: x.size)   #worst case sorted passing tests
     #failing.sort(key=lambda x: x.size)   #worst case sorted failing tests
     #c.print_bounds_graph(passing,failing)
-
-    #c.plot_true_explanation(passing)
 
 
     import matplotlib.pyplot as plt

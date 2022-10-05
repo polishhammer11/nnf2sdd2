@@ -17,7 +17,7 @@ class Inputs:
             self.setting = {}
         else:
             self.original_weights = weights
-            self.weights = { index:int(weight) for index,weight \
+            self.weights = { index:float(weight) for index,weight \
                              in enumerate(weights) }
             self.setting = {}
 
@@ -25,11 +25,11 @@ class Inputs:
         st = []
         for index in self.weights:
             weight = self.weights[index]
-            st.append("  input %d: weight %d" % (index,weight))
+            st.append("  input %d: weight %.4f" % (index,weight))
         for index in self.setting:
             value,weight = self.setting[index]
             value = "None" if value is None else str(value)
-            st.append("  input %d: weight %d (set to %s)" % \
+            st.append("  input %d: weight %.4f (set to %s)" % \
                       (index,weight,value))
         return "\n".join(st)
 
@@ -96,7 +96,7 @@ class Classifier:
 
 
     def lowerupperbound(self):
-        intweights = [int(x) for x in self.weights]
+        intweights = [float(x) for x in self.weights]
 
         intweights.sort() 
 
@@ -104,7 +104,7 @@ class Classifier:
 
         intweight = [str(x) for x in intweights]
 
-        newsize = int(self.size)
+        newsize = float(self.size)
         newsize -= 1
         self.size = str(newsize)
         str(self.size)
@@ -112,11 +112,11 @@ class Classifier:
 
 
     def raiselowerbound(self):
-        intweights = [int(x) for x in self.weights]
+        intweights = [float(x) for x in self.weights]
         intweights.sort()
         intweights.pop()
         intweight = [str(x) for x in intweights]
-        newsize = int(self.size)
+        newsize = float(self.size)
         newsize -= 1
         self.size = str(newsize)
         str(self.size)
@@ -124,42 +124,42 @@ class Classifier:
 
 
     def lowerthreshold(self):
-        intweights = [int(x) for x in self.weights]
+        intweights = [float(x) for x in self.weights]
         intweights.sort()
         thresh = intweights.pop()
         intweight = [str(x) for x in intweights]
-        newthresh = int(self.threshold)
+        newthresh = float(self.threshold)
         newthresh -= thresh
         self.threshold = str(newthresh)
         self.weights = intweight
-        newsize = int(self.size)
+        newsize = float(self.size)
         newsize -= 1
         self.size = str(newsize)
         str(self.weights)
 
 
     def raisethreshold(self):
-        intweights = [int(x) for x in self.weights]
+        intweights = [float(x) for x in self.weights]
         intweights.sort()
         thresh = intweights.pop(0)
         intweight = [str(x) for x in intweights]
-        newthresh = int(self.threshold)
+        newthresh = float(self.threshold)
         newthresh -= thresh
         self.threshold = str(newthresh)
         self.weights = intweight
-        newsize = int(self.size)
+        newsize = float(self.size)
         newsize -= 1
         self.size = str(newsize)
         str(self.weights)
     
 
     def minimizebothbounds(self):
-        intweights = [int(x) for x in self.weights]
+        intweights = [float(x) for x in self.weights]
         intweights.sort()
         intweights.pop()
         intweights.pop(0)
         intweight = [str(x) for x in intweights]
-        newsize = int(self.size)
+        newsize = float(self.size)
         newsize -= 2
         self.size = str(newsize)
         str(self.size)
@@ -169,12 +169,12 @@ class Classifier:
         
         
     def fastmove(self):
-        intweights = [int(x) for x in self.weights]
-        intweights2 = [int(x) for x in self.weights]
+        intweights = [float(x) for x in self.weights]
+        intweights2 = [float(x) for x in self.weights]
         absintweights = [abs(x) for x in intweights]
         
-        twointweights = [int(x) for x in self.weights], [0 for x in self.weights]
-        thresh = int(self.threshold)
+        twointweights = [float(x) for x in self.weights], [0 for x in self.weights]
+        thresh = float(self.threshold)
 
         lowerbound = sum(i for i in intweights if i<0)
 
@@ -204,65 +204,7 @@ class Classifier:
             for j in i:
                 print(j, end = " ")
             print()
-        
 
-        
-
-        
-
-        
-        
-        
-        
-
-
-
-
-
-
-
-
-
-#intweights = [int(x) for x in self.weights]
-#        inst = {}
-#        twointweights = [int(x) for x in self.weights], [0 for x in self.weights]
-#        thresh = int(self.threshold)
-#        lowerbound = sum(i for i in intweights if i<0) 
-#        absweights = [abs(x) for x in intweights]
-#        absweights.sort()
-#        while lowerbound < thresh:
-#            mostneg = min(intweights)
-            #print(twointweights[1])
-#            if(mostneg < 0):
-#                lowerbound -= mostneg
-                   
-
-#            inde = intweights.index(mostneg)
-
-#            twointweights[1][inde] = 1
-
-#            inst[inde+1] = 1
-            
-
-#            col = len(self.weights)
-#            row = 2
-#            for j in range(col):
-#                for i in range(row):
-#                    if(twointweights[col][row] == mostneg):
-#                        twointweights[col][row+1] = 1
-                    
-#        print(twointweights[0])
-#        print(twointweights[1])
-#        print(inst)
-
-
-
-        
-
-        
-
-        
-    
     	    
 
     def format_andy(self):
@@ -347,7 +289,7 @@ class Classifier:
         assert self.is_integer
         lower,upper = 0,0
         for weight in self.weights:
-            weight = int(weight)
+            weight = float(weight)
             if weight < 0:
                 lower += weight
             else:
@@ -355,7 +297,7 @@ class Classifier:
         return (lower,upper)
 
     def _to_obdd(self,matrix):
-        var_count = int(self.size)
+        var_count = float(self.size)
         manager = ObddManager(var_count)
         one,zero = manager.one_sink(),manager.zero_sink()
         last_level = matrix[var_count+1]
@@ -371,19 +313,19 @@ class Classifier:
 
     def compile(self):
         assert self.is_integer
-        var_count = int(self.size)
+        var_count = float(self.size)
         matrix = [ dict() for _ in range(var_count+2) ]
         matrix[1][0] = None # root node
         for i in range(1,var_count+1):
             level,next_level = matrix[i],matrix[i+1]
-            weight = int(self.weights[i-1])
+            weight = float(self.weights[i-1])
             for node in level:
                 hi,lo = (node+weight,node)
                 level[node] = (hi,lo) # (hi,lo)
                 next_level[hi] = None
                 next_level[lo] = None
         last_level = matrix[var_count+1]
-        threshold = int(self.threshold)
+        threshold = float(self.threshold)
         for node in last_level:
             last_level[node] = node >= threshold
         return self._to_obdd(matrix)
@@ -392,18 +334,18 @@ class Classifier:
 class IntClassifier(Classifier):
     def __init__(self,name="none",size=0,weights=[],threshold=0):
         super().__init__(name=name,size=size,weights=weights,threshold=threshold)
-        assert self.is_integer
-        self.size = int(size)
-        self.weights = [int(x) for x in weights]
-        self.threshold = int(threshold)
+        #assert self.is_integer
+        self.size = float(size)
+        self.weights = [float(x) for x in weights]
+        self.threshold = float(threshold)
 
     def __repr__(self):
         st = []
         st.append("name: %s" % self.name)
         st.append("size: %d" % self.size)
         st.append("weights: %s" % " ".join(str(weight) for weight in self.weights))
-        st.append("threshold: %d" % self.threshold)
-        st.append("bounds: [%d,%d]" % \
+        st.append("threshold: %.4f" % self.threshold)
+        st.append("bounds: [%.4f,%.4f]" % \
                   (self.lowerbound(),self.upperbound()))
         st.append("inputs:\n%s" % str(self.inputs))
         return "\n".join(st)
@@ -457,6 +399,9 @@ class IntClassifier(Classifier):
     def is_trivially_false(self):
         return self.threshold > self.upperbound()
 
+    def gap(self):
+        return self.threshold - self.lowerbound()
+
     def fast_trivially_true(self):
         """automize finding the fastest way to make a test trivially
         true and false
@@ -494,7 +439,7 @@ class IntClassifier(Classifier):
         c = self
         
         if c.is_trivially_true():
-            print()
+            #print()
             #print(c.inputs)
             explanationsize.append(c)
             return
@@ -576,7 +521,7 @@ class IntClassifier(Classifier):
         plt.plot(x2,y2,marker = 'o', markersize=1)
         #plt.show()
 
-    def a_star_search(self):
+    def breadth_first_search(self):
         #import pdb;
         #pdb.set_trace()
         from queue import PriorityQueue
@@ -605,37 +550,129 @@ class IntClassifier(Classifier):
                 q.put((len(b.inputs.setting),count,b))
                 
         return fq
+
+    def breadth_first_search_f(self):
+        #import pdb;
+        #pdb.set_trace()
+        from queue import PriorityQueue
+        c = self
+        fq = PriorityQueue()
+        q = PriorityQueue()
+        count = 0
+        q.put((c.size,count,c))
+        
+        while(not q.empty()):
+            current = q.get()
+            current2 = current
+            if(current[2].is_trivially_false()):
+                fq.put(current)
+                continue
+            if(current[2].is_trivially_true()):
+                continue
+            else:
+                index,weight = current[2].inputs.get_biggest_weight()
+                count+=1
+                a = current[2].set_input(index,1)
+                q.put((len(a.inputs.setting),count,a))
+
+                b = current2[2].set_input(index,0)
+                count += 1
+                q.put((len(b.inputs.setting),count,b))
+                
+        return fq
+
+
+    def a_star_search(self):
+        #import pdb
+        #pdb.set_trace()
+        from queue import PriorityQueue
+        
+        c = self
+
+        closed = PriorityQueue()
+        opened = PriorityQueue()
+        count = 0
+        path_count = 0
+        opened.put((c.size,count,c))
+
+        goal = 0
+
+        while(not opened.empty()):
+            current = opened.get()
+            c = current[2]
+
+            if(current[2].is_trivially_false()):
+                continue
+            if(current[2].is_trivially_true()):
+                path_count += 1
+                closed.put(current)
+            else:
+                path_count += 1
+                index,weight = current[2].inputs.get_biggest_weight()
+                child0 = current[2].set_input(index,0)
+                child1 = current[2].set_input(index,1)
+                count += 1
+                #opened.put((child0.gap(),count,child0))
+                opened.put((len(child0.inputs.setting),count,child0))
+                count += 1
+                #opened.put((child1.gap(),count,child1))
+                opened.put((len(child1.inputs.setting),count,child1))
+
+        #goals = []
+        #while (not closed.empty()): goals.append(closed.get())
+        print("nodes found: ", count+1)
+        print("path nodes found: ", path_count)
+        #print("goals found: ", len(goals))
+
+        return closed
+                
 
     def a_star_search_f(self):
-        #import pdb;
+        #import pdb
         #pdb.set_trace()
         from queue import PriorityQueue
-        c = self
-        fq = PriorityQueue()
-        q = PriorityQueue()
-        count = 0
-        q.put((c.size,count,c))
         
-        while(not q.empty()):
-            current = q.get()
-            current2 = current
+        c = self
+
+        closed = PriorityQueue()
+        opened = PriorityQueue()
+        count = 0
+        path_count = 0
+        opened.put((c.size,count,c))
+
+        goal = 0
+
+        while(not opened.empty()):
+            current = opened.get()
+            c = current[2]
+
             if(current[2].is_trivially_false()):
-                fq.put(current)
+                path_count += 1
+                closed.put(current)
                 continue
             if(current[2].is_trivially_true()):
                 continue
             else:
+                path_count += 1
                 index,weight = current[2].inputs.get_biggest_weight()
-                count+=1
-                a = current[2].set_input(index,1)
-                q.put((len(a.inputs.setting),count,a))
-
-                b = current2[2].set_input(index,0)
+                child0 = current[2].set_input(index,0)
+                child1 = current[2].set_input(index,1)
                 count += 1
-                q.put((len(b.inputs.setting),count,b))
-                
-        return fq
+                #opened.put((child0.gap(),count,child0))
+                opened.put((len(child0.inputs.setting),count,child0))
+                count += 1
+                #opened.put((child1.gap(),count,child1))
+                opened.put((len(child1.inputs.setting),count,child1))
 
+        #goals = []
+        #while (not closed.empty()): goals.append(closed.get())
+        print("nodes found: ", count+1)
+        print("path nodes found: ", path_count)
+        #print("goals found: ", len(goals))
+
+        return closed
+                
+                
     def a_star_graph(self,pq,fq):
         import matplotlib.pyplot as plt
         #import pdb
@@ -645,6 +682,8 @@ class IntClassifier(Classifier):
         x2 = [0]
         y2 = [2**self.size]
         count = 0
+        size = fq.qsize()
+
         while(not pq.empty()):
             current = pq.get()
             y.append(y[count] + 2**len((current[2].inputs.weights)))
@@ -657,38 +696,15 @@ class IntClassifier(Classifier):
             count += 1
             x2.append(count)
             
-        plt.plot(x,y,marker='o',markersize=1)
-        plt.plot(x2,y2,marker='o',markersize=1)
+        plt.plot(x,y,marker='*',markersize=1)
+        plt.plot(x2,y2,marker='*',markersize=1)
+        plt.axhline(y = y2[size], color = 'red', linestyle = '--')
         #plt.show()
 
             
         
         
-    
-
-
-            
-
-        
-        
-
-
-
-
-'''
-        while(len(q)>0):
-            current = p.pop()
-            if(c == self.fast_trivially_true()):
-                return c
-    
-            
-
-        c.print_all_true_models(passing)
-        for i in range(len(passing)):
-            q.append((passing[i].size,i, passing[i]))
-        q.sort(reverse=True)
-        while(not q):
-'''         
+     
             
             
 

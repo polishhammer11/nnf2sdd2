@@ -1,4 +1,4 @@
 name: example
-size: 16
-weights: -4 -2 3 5 5 -12 3 6 2 4 7 -12 -5 -6 3 1
+size: 21
+weights: -4 -2 3 5 2 3 -4 -7 4 6 2 4 6 -5 4 2 4 8 -12 5 3 
 threshold: 3
