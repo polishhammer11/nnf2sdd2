@@ -7,9 +7,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 
-data_dir = "/home/richard/School/research/nnf2sdd2/testing/0-1digits/train-0-1.txt"
+data_dir = "train-0-1.txt"
 dataset=pd.read_csv(data_dir)
 train_features = dataset
+
+import pdb; pdb.set_trace()
 train_labels = train_features.pop("1.48")
 
 
@@ -23,12 +25,13 @@ A = np.array(train_features)
 y = np.array(train_labels)
 w = np.array(model.coef_).T 
 b = np.array(model.intercept_) 
-sum((A@w >= -b).flatten() == y)/len(y) #check for training accuracy
+acc = sum((A@w >= -b).flatten() == y)/len(y)
+print("       my accuracy: %.8f%%" % (100*acc,))
 
 
 #creating file
 arr = model.coef_[0]
-file1 = open("/home/richard/School/research/nnf2sdd2/examples/0-1digits.neuron","w")
+file1 = open("neuron/0-1digits.neuron","w")
 file1.write("name: example")
 file1.write("\nsize: ")
 file1.write((str)(len(model.coef_[0])))
@@ -38,4 +41,4 @@ for x in range(len(arr)):
     file1.write(str(model.coef_[0][x]))
                     
 file1.write("\nthreshold: ")
-file1.write(str(model.intercept_[0]))
+file1.write(str(-model.intercept_[0]))

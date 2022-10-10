@@ -600,8 +600,10 @@ class IntClassifier(Classifier):
         while(not opened.empty()):
             current = opened.get()
             c = current[2]
-            print(c)
-            
+            #print(c)
+            if count % 1000 == 0:
+                print("open:", opened.qsize())
+                print("closed:", closed.qsize())
 
             if(current[2].is_trivially_false()):
                 continue
