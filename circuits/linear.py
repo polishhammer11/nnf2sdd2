@@ -600,6 +600,8 @@ class IntClassifier(Classifier):
         while(not opened.empty()):
             current = opened.get()
             c = current[2]
+            print(c)
+            
 
             if(current[2].is_trivially_false()):
                 continue
@@ -666,8 +668,8 @@ class IntClassifier(Classifier):
 
         #goals = []
         #while (not closed.empty()): goals.append(closed.get())
-        print("nodes found: ", count+1)
-        print("path nodes found: ", path_count)
+        #print("nodes found: ", count+1)
+        #print("path nodes found: ", path_count)
         #print("goals found: ", len(goals))
 
         return closed

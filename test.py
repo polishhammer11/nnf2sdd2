@@ -9,8 +9,10 @@ def print_model(model):
 
 if __name__ == '__main__':
     filename = 'examples/example.neuron'
-    congressdata = 'examples/file.txt'
-    c = IntClassifier.read(congressdata)
+    congressdata = 'examples/congressionalvoting.neuron'
+    digits = 'examples/0-1digits.neuron'
+    spect = 'examples/SPECT.neuron'
+    c = IntClassifier.read(digits)
     print("=== INPUT NEURON:")
     print(c)
     
