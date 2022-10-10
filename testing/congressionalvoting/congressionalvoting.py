@@ -54,4 +54,4 @@ for x in range(len(arr)):
     file1.write(str(model.coef_[0][x]))
                     
 file1.write("\nthreshold: ")
-file1.write(str(model.intercept_[0]))
+file1.write(str(-model.intercept_[0]))
