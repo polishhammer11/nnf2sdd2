@@ -13,6 +13,7 @@ if __name__ == '__main__':
     digits = 'testing/0-1digits/neuron/0-1digits.neuron'
     spect = 'testing/SPECT/neuron/SPECT.neuron'
     tictactoe = 'testing/tictactoe/neuron/tictactoe.neuron'
+    banknote = 'testing/banknotedata/neuron/banknote.neuron'
     c = IntClassifier.read(digits)
     print("=== INPUT NEURON:")
     print(c)

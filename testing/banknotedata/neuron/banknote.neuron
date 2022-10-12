@@ -1,0 +1,4 @@
+name: example
+size: 4
+weights:  -3.364966 -1.887651 -2.306994 -0.088939
+threshold: -3.738835
