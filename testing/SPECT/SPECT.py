@@ -20,7 +20,7 @@ A = np.array(train_features)
 y = np.array(train_labels)
 w = np.array(model.coef_).T 
 b = np.array(model.intercept_) 
-acc = sum((A@w >= -b).flatten() == y)/len(y)
+acc = sum((A@w > -b).flatten() == y)/len(y)
 print("       my accuracy: %.8f%%" % (100*acc,))
 
 #creating file

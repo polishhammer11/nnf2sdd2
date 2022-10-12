@@ -8,7 +8,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 
-url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/voting-records/house-votes-84.data'
+
+data_dir = "house-votes-84.data"
 column_names = ['Class Name','handicapped-infants','water-project-cost-sharing',
                 'adoption-of-the-budget-resolution','physician-fee-freeze',
                 'el-salvador-aid','religious-groups-in-schools','anti-satellite-test-ban',
@@ -17,7 +18,7 @@ column_names = ['Class Name','handicapped-infants','water-project-cost-sharing',
                 'export-administration-act-south-africa']
 
 
-dataset = pd.read_csv(url, names=column_names)
+dataset = pd.read_csv(data_dir, names=column_names)
 dataset = dataset.replace({'y': 1, 'n': 0, 'democrat': 1, 'republican': 0} )
 dataset = dataset.replace({'?':0}) 
 train_features = dataset
@@ -26,6 +27,7 @@ train_labels = train_features.pop('Class Name')
 
 
 model = LogisticRegression()
+#model = LogisticRegression(penalty='l1',solver='liblinear',C=.001)
 classifier = model.fit(train_features,train_labels)
 train_accuracy = 100*classifier.score(train_features,train_labels)
 print("LogisticRegression: %.8f%% (training accuracy)" % (train_accuracy,))
@@ -39,12 +41,12 @@ A = np.array(train_features)
 y = np.array(train_labels)
 w = np.array(model.coef_).T 
 b = np.array(model.intercept_) 
-sum((A@w >= -b).flatten() == y)/len(y) #check for training accuracy
+print(sum((A@w > -b).flatten() == y)/len(y)*100) #check for training accuracy
 
 
 #creating file
 arr = model.coef_[0]
-file1 = open("/home/richard/School/research/nnf2sdd2/examples/congressionalvoting.neuron","w")
+file1 = open("neuron/congressionalvoting.neuron","w")
 file1.write("name: example")
 file1.write("\nsize: ")
 file1.write((str)(len(model.coef_[0])))
