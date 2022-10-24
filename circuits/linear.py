@@ -582,7 +582,7 @@ class IntClassifier(Classifier):
         return fq
 
 
-    def a_star_search(self):
+    def a_star_search(self,passing):
         #import pdb
         #pdb.set_trace()
         from queue import PriorityQueue
@@ -608,6 +608,9 @@ class IntClassifier(Classifier):
             if(current[2].is_trivially_false()):
                 continue
             if(current[2].is_trivially_true()):
+                #if(arrcount<11):
+                passing.append(current[2])
+                #    arrcount+=1
                 path_count += 1
                 closed.put(current)
             else:
@@ -631,7 +634,7 @@ class IntClassifier(Classifier):
         return closed
                 
 
-    def a_star_search_f(self):
+    def a_star_search_f(self,failing):
         #import pdb
         #pdb.set_trace()
         from queue import PriorityQueue
@@ -652,6 +655,7 @@ class IntClassifier(Classifier):
 
             if(current[2].is_trivially_false()):
                 path_count += 1
+                failing.append(current[2])
                 closed.put(current)
                 continue
             if(current[2].is_trivially_true()):
@@ -705,13 +709,103 @@ class IntClassifier(Classifier):
         plt.axhline(y = y2[size], color = 'red', linestyle = '--')
         #plt.show()
 
-            
+
+    def make_image(self,passing,failing,filedir):
+        import numpy as np
+        from matplotlib import pyplot as plt
+        #import pdb
+        #pdb.set_trace()
         
-        
+        with open(filedir, 'r') as f:
+            digit = f.readlines()[8].split(',')
+        digit = [int(x) for x in digit]
+        label = digit.pop()
+        digit = np.array(digit)
+
+        '''
+        x = 2
+        if label == 1:
+            passing[x].remove_nonreducing()
+            shortest = list(passing[x].inputs.setting.keys())
+            shortestval = list(passing[x].inputs.setting.values())
+            for i in range(len(shortest)):
+                if shortestval[i][0] == 1:
+                    digit[shortest[i]] = 2
+                if shortestval[i][0] == 0:
+                    digit[shortest[i]] = -1
+                else:
+                    continue
+            digit = digit.reshape(28,28)
+            plt.imshow(digit, cmap='gray')
+            plt.savefig('img.png', cmap='gray')
+       
+        if label == 0:
+            if(len(failing)>0):
+               failing[x].remove_nonreducing_f()
+               shortest = list(failing[x].inputs.setting.keys())
+               shortestval = list(failing[x].inputs.setting.values())
+               for i in range(len(shortest)):
+                   if shortestval[i][0] == 1:
+                       digit[shortest[i]] = 2
+                   if shortestval[i][0] == 0:
+                       digit[shortest[i]] = -1
+                   else:
+                       continue '''
+    
+        if label == 1:
+            for i in range(len(passing)):
+                passing[i].remove_nonreducing()
+                shortest = list(passing[i].inputs.setting.keys())
+                shortestval = list(passing[i].inputs.setting.values())
+                for i in range(len(shortest)):
+                    if shortestval[i][0] == 1:
+                        digit[shortest[i]] = 2
+                    if shortestval[i][0] == 0:
+                        digit[shortest[i]] = -1
+                else:
+                    continue
+            digit = digit.reshape(28,28)
+            plt.imshow(digit, cmap='gray')
+            plt.savefig('img.png', cmap='gray')
+
+        if label == 0:
+            for i in range(len(failing)):
+                failing[i].remove_nonreducing_f()
+                shortest = list(failing[i].inputs.setting.keys())
+                shortestval = list(failing[i].inputs.setting.values())
+                for i in range(len(shortest)):
+                    if shortestval[i][0] == 1:
+                        digit[shortest[i]] = 2
+                    if shortestval[i][0] == 0:
+                        digit[shortest[i]] = -1
+                else:
+                    continue
+            digit = digit.reshape(28,28)
+            plt.imshow(digit, cmap='gray')
+            plt.savefig('img.png', cmap='gray')
      
             
-            
+    def remove_nonreducing(self):
+        valarr = list(self.inputs.setting.values())
+        keyarr = list(self.inputs.setting.keys())
+        for x in range(len(valarr)):
+            if valarr[x][0] == 0 and valarr[x][1] > 0:
+                self.inputs.setting.pop(keyarr[x])
+            if valarr[x][0] == 1 and valarr[x][1] < 0:
+                self.inputs.setting.pop(keyarr[x])
 
+    def remove_nonreducing_f(self):
+        #import pdb
+        #pdb.set_trace()
+        valarr = list(self.inputs.setting.values())
+        keyarr = list(self.inputs.setting.keys())
+        for x in range(len(valarr)):
+            if valarr[x][0] == 0 and valarr[x][1] < 0:
+                self.inputs.setting.pop(keyarr[x])
+            if valarr[x][0] == 1 and valarr[x][1] > 0:
+                self.inputs.setting.pop(keyarr[x])
+        
+    
         
             
 
