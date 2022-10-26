@@ -19,6 +19,7 @@ class Inputs:
             self.original_weights = weights
             self.weights = { index:float(weight) for index,weight \
                              in enumerate(weights) }
+            #self.remove_zero_weights() # ACACAC
             self.setting = {}
 
     def __repr__(self):
@@ -46,8 +47,14 @@ class Inputs:
         self.setting[index] = (value,weight)
         return weight
 
+    def remove_zero_weights(self):
+        zero_indices = [ index for index,weight in self.weights.items() if weight == 0 ]
+        for index in zero_indices:
+            del self.weights[index]
+
     def get_biggest_weight(self):
         """return weight with largest absolute value"""
+        # ACAC: use priority queue
         if len(self.weights) == 0: return None
         biggest_index,biggest_abs_weight = None,0
         for index,weight in self.weights.items():
@@ -57,6 +64,24 @@ class Inputs:
                 biggest_abs_weight = abs_weight
         biggest_weight = self.weights[biggest_index]
         return (biggest_index,biggest_weight)
+
+    def set_biggest_weight(self,value):
+        # ACAC: TODO
+        pass
+
+    def settings_needed(self,target):
+        """returns the number of inputs that need to be set to achieve
+        a target decrease in the gap of the threshold test"""
+        sorted_weights = [ abs(self.weights[index]) for index in self.weights ]
+        sorted_weights.sort(reverse=True)
+        weight_sum = 0.0
+        weight_count = 0
+        for weight in sorted_weights:
+            if weight_sum >= target:
+                return weight_count
+            weight_sum += weight
+            weight_count += 1
+        return weight_count
 
     def get_model(self):
         return { index:value for index,(value,w) in self.setting.items() if value is not None }
@@ -234,6 +259,7 @@ class Classifier:
         """Parse a neuron string format"""
         neuron = {}
         for line in st.split('\n'):
+            line = line.strip()
             if not line: continue
             field,value = line.split(':')
             field = field.strip()
@@ -313,7 +339,7 @@ class Classifier:
 
     def compile(self):
         assert self.is_integer
-        var_count = float(self.size)
+        var_count = int(self.size)
         matrix = [ dict() for _ in range(var_count+2) ]
         matrix[1][0] = None # root node
         for i in range(1,var_count+1):
@@ -335,7 +361,7 @@ class IntClassifier(Classifier):
     def __init__(self,name="none",size=0,weights=[],threshold=0):
         super().__init__(name=name,size=size,weights=weights,threshold=threshold)
         #assert self.is_integer
-        self.size = float(size)
+        self.size = int(size)
         self.weights = [float(x) for x in weights]
         self.threshold = float(threshold)
 
@@ -343,11 +369,11 @@ class IntClassifier(Classifier):
         st = []
         st.append("name: %s" % self.name)
         st.append("size: %d" % self.size)
-        st.append("weights: %s" % " ".join(str(weight) for weight in self.weights))
+        #st.append("weights: %s" % " ".join(str(weight) for weight in self.weights))
         st.append("threshold: %.4f" % self.threshold)
         st.append("bounds: [%.4f,%.4f]" % \
                   (self.lowerbound(),self.upperbound()))
-        st.append("inputs:\n%s" % str(self.inputs))
+        #st.append("inputs:\n%s" % str(self.inputs))
         return "\n".join(st)
 
     @staticmethod
@@ -581,6 +607,114 @@ class IntClassifier(Classifier):
                 
         return fq
 
+    def _search_weights(self):
+        from itertools import accumulate
+
+        weights = self.inputs.weights.values()
+        weights = [ w for w in weights if w != 0 ]
+
+        keyf = lambda x: abs(x)
+        sorted_weights = sorted(weights,key=keyf,reverse=True)
+        abs_weights = [ abs(w) for w in sorted_weights ]
+        accum_weights = [0.0] + list(accumulate(abs_weights))
+
+        return sorted_weights, accum_weights
+
+    @staticmethod
+    def _find(sorted_list,target,lo=0):
+        hi = len(sorted_list)
+        
+        for i,val in enumerate(sorted_list[lo:],start=1):
+            if val >= target:
+                return i
+        return hi+1 # ACACAC
+
+    @staticmethod
+    def _add_to_closed(d,accum_weights,opened):
+        IntClassifier.id_count += 1
+        depth,t,lb,ub = d
+        gap = t-lb
+        target = accum_weights[depth] + gap
+        h_cost = IntClassifier._find(accum_weights,target,lo=depth+1)
+        f_cost = depth + h_cost
+        node = (f_cost,-IntClassifier.id_count,d)
+        opened.put(node)
+
+    def a_star_search_alt(self):
+        from queue import PriorityQueue        
+
+        c = self
+        IntClassifier.id_count = 0
+        closed_list = []
+        opened = PriorityQueue()
+        is_true =  lambda x: x[1] <= x[2]
+        is_false = lambda x: x[1] > x[3]
+        sorted_weights,accum_weights = c._search_weights()
+
+        depth = 0
+        t = c.threshold
+        lb = sum(w for w in sorted_weights if w < 0)
+        ub = sum(w for w in sorted_weights if w > 0)
+
+        d = (depth,t,lb,ub)
+        IntClassifier._add_to_closed(d,accum_weights,opened)
+
+        true_count, false_count = 0,0
+        lower_bound,upper_bound = 0,2**c.size
+        total_bound = 2**c.size
+
+        while(not opened.empty()):
+            f_cost,_,current = opened.get()
+            depth,t,lb,ub = current
+            var_count = c.size - depth
+
+            if IntClassifier.id_count % 10000 == 0:
+                osize = opened.qsize()
+                csize = len(closed_list)
+                print("open/closed (cost): %d,%d (%d)" % (osize,csize,f_cost))
+                print("true/false: %d,%d" % (true_count,false_count))
+
+            #if is_false(current) or depth >= len(sorted_weights): #ACAC
+            if is_false(current):
+                false_count += 1
+                upper_bound -= 2**var_count
+            elif is_true(current) or depth >= len(sorted_weights): #ACAC
+                true_count += 1
+                closed_list.append(current)
+                lower_bound += 2**var_count
+            else:
+                weight = sorted_weights[depth]
+
+                # update lower/upper bounds
+                if weight > 0: new_lb,new_ub = lb,ub-weight
+                else:          new_lb,new_ub = lb-weight,ub
+
+                # set value to one
+                new_t = t-weight
+                child = (depth+1,new_t,new_lb,new_ub)
+                if not is_false(child):
+                    IntClassifier._add_to_closed(child,accum_weights,opened)
+                else:
+                    false_count += 1
+                    upper_bound -= 2**(var_count-1)
+
+                # set value to zero
+                new_t = t
+                child = (depth+1,new_t,new_lb,new_ub)
+                if not is_false(child):
+                    IntClassifier._add_to_closed(child,accum_weights,opened)
+                else:
+                    false_count += 1
+                    upper_bound -= 2**(var_count-1)
+
+        print("lower bound: ", lower_bound)
+        print("upper bound: ", upper_bound)
+
+        closed = PriorityQueue()
+        for item in closed_list:
+            closed.put(item)
+        return closed
+        
 
     def a_star_search(self):
         #import pdb
@@ -589,45 +723,66 @@ class IntClassifier(Classifier):
         
         c = self
 
-        closed = PriorityQueue()
+        closed_list = []
+        closed = PriorityQueue() # ACAC: make this a list
         opened = PriorityQueue()
         count = 0
         path_count = 0
-        opened.put((c.size,count,c))
+        true_count, false_count = 0,0
+        lower_bound,upper_bound = 0,2**c.size
+        total_bound = 2**c.size
+
+        g_cost = len(c.inputs.setting)
+        h_cost = c.inputs.settings_needed(c.gap())
+        opened.put((g_cost+h_cost,-count,c))
 
         goal = 0
+
+        #import pdb; pdb.set_trace()
 
         while(not opened.empty()):
             current = opened.get()
             c = current[2]
             #print(c)
-            if count % 1000 == 0:
-                print("open:", opened.qsize())
-                print("closed:", closed.qsize())
+            if count % 100 == 0:
+                print("open/closed (cost): %d,%d (%d)" % (opened.qsize(),len(closed_list),current[0]))
+                print("true/false: %d,%d" % (true_count,false_count))
 
-            if(current[2].is_trivially_false()):
+            if c.is_trivially_false():
+                false_count += 1
+                upper_bound -= 2**child0.size
                 continue
-            if(current[2].is_trivially_true()):
+            if c.is_trivially_true():
+                true_count += 1
                 path_count += 1
-                closed.put(current)
+                closed_list.append(current)
+                lower_bound += 2**c.size
             else:
                 path_count += 1
-                index,weight = current[2].inputs.get_biggest_weight()
-                child0 = current[2].set_input(index,0)
-                child1 = current[2].set_input(index,1)
+                index,weight = c.inputs.get_biggest_weight()
+                child0 = c.set_input(index,0)
+                child1 = c.set_input(index,1)
+
+                #if not child0.is_trivially_false():
                 count += 1
-                #opened.put((child0.gap(),count,child0))
-                opened.put((len(child0.inputs.setting),count,child0))
+                g_cost = len(child0.inputs.setting)
+                h_cost = child0.inputs.settings_needed(child0.gap())
+                opened.put((g_cost+h_cost,-count,child0))
+
+                #if not child1.is_trivially_false():
                 count += 1
-                #opened.put((child1.gap(),count,child1))
-                opened.put((len(child1.inputs.setting),count,child1))
+                g_cost = len(child1.inputs.setting)
+                h_cost = child1.inputs.settings_needed(child1.gap())
+                opened.put((g_cost+h_cost,-count,child1))
 
         #goals = []
         #while (not closed.empty()): goals.append(closed.get())
         print("nodes found: ", count+1)
         print("path nodes found: ", path_count)
-        #print("goals found: ", len(goals))
+        print("lower bound: ", lower_bound)
 
+        for item in closed_list:
+            closed.put(item)
         return closed
                 
 
@@ -659,6 +814,7 @@ class IntClassifier(Classifier):
             else:
                 path_count += 1
                 index,weight = current[2].inputs.get_biggest_weight()
+
                 child0 = current[2].set_input(index,0)
                 child1 = current[2].set_input(index,1)
                 count += 1
