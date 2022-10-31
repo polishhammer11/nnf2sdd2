@@ -323,7 +323,7 @@ class Classifier:
         return (lower,upper)
 
     def _to_obdd(self,matrix):
-        var_count = float(self.size)
+        var_count = int(self.size)
         manager = ObddManager(var_count)
         one,zero = manager.one_sink(),manager.zero_sink()
         last_level = matrix[var_count+1]
