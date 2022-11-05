@@ -344,14 +344,14 @@ class Classifier:
         matrix[1][0] = None # root node
         for i in range(1,var_count+1):
             level,next_level = matrix[i],matrix[i+1]
-            weight = float(self.weights[i-1])
+            weight = int(self.weights[i-1])
             for node in level:
                 hi,lo = (node+weight,node)
                 level[node] = (hi,lo) # (hi,lo)
                 next_level[hi] = None
                 next_level[lo] = None
         last_level = matrix[var_count+1]
-        threshold = float(self.threshold)
+        threshold = int(self.threshold)
         for node in last_level:
             last_level[node] = node >= threshold
         return self._to_obdd(matrix)
@@ -627,6 +627,8 @@ class IntClassifier(Classifier):
         for i,val in enumerate(sorted_list[lo:],start=1):
             if val >= target:
                 return i
+
+        # AC: this line should not normally be reached
         return hi+1 # ACACAC
 
     @staticmethod
@@ -634,8 +636,11 @@ class IntClassifier(Classifier):
         IntClassifier.id_count += 1
         depth,t,lb,ub = d
         gap = t-lb
-        target = accum_weights[depth] + gap
-        h_cost = IntClassifier._find(accum_weights,target,lo=depth+1)
+        if gap > 0:
+            target = accum_weights[depth] + gap
+            h_cost = IntClassifier._find(accum_weights,target,lo=depth+1)
+        else: # already at goal
+            h_cost = 0
         f_cost = depth + h_cost
         node = (f_cost,-IntClassifier.id_count,d)
         opened.put(node)
@@ -674,11 +679,10 @@ class IntClassifier(Classifier):
                 print("open/closed (cost): %d,%d (%d)" % (osize,csize,f_cost))
                 print("true/false: %d,%d" % (true_count,false_count))
 
-            #if is_false(current) or depth >= len(sorted_weights): #ACAC
             if is_false(current):
                 false_count += 1
                 upper_bound -= 2**var_count
-            elif is_true(current) or depth >= len(sorted_weights): #ACAC
+            elif is_true(current):
                 true_count += 1
                 closed_list.append(current)
                 lower_bound += 2**var_count
@@ -692,20 +696,20 @@ class IntClassifier(Classifier):
                 # set value to one
                 new_t = t-weight
                 child = (depth+1,new_t,new_lb,new_ub)
-                if not is_false(child):
-                    IntClassifier._add_to_closed(child,accum_weights,opened)
-                else:
+                if is_false(child):
                     false_count += 1
                     upper_bound -= 2**(var_count-1)
+                else:
+                    IntClassifier._add_to_closed(child,accum_weights,opened)
 
                 # set value to zero
                 new_t = t
                 child = (depth+1,new_t,new_lb,new_ub)
-                if not is_false(child):
-                    IntClassifier._add_to_closed(child,accum_weights,opened)
-                else:
+                if is_false(child):
                     false_count += 1
                     upper_bound -= 2**(var_count-1)
+                else:
+                    IntClassifier._add_to_closed(child,accum_weights,opened)
 
         print("lower bound: ", lower_bound)
         print("upper bound: ", upper_bound)
