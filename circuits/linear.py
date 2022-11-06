@@ -234,6 +234,7 @@ class Classifier:
         """Parse a neuron string format"""
         neuron = {}
         for line in st.split('\n'):
+            line = line.strip()
             if not line: continue
             field,value = line.split(':')
             field = field.strip()
@@ -297,7 +298,7 @@ class Classifier:
         return (lower,upper)
 
     def _to_obdd(self,matrix):
-        var_count = float(self.size)
+        var_count = int(self.size)
         manager = ObddManager(var_count)
         one,zero = manager.one_sink(),manager.zero_sink()
         last_level = matrix[var_count+1]
@@ -335,7 +336,7 @@ class IntClassifier(Classifier):
     def __init__(self,name="none",size=0,weights=[],threshold=0):
         super().__init__(name=name,size=size,weights=weights,threshold=threshold)
         #assert self.is_integer
-        self.size = float(size)
+        self.size = int(size)
         self.weights = [float(x) for x in weights]
         self.threshold = float(threshold)
 
@@ -663,6 +664,7 @@ class IntClassifier(Classifier):
             else:
                 path_count += 1
                 index,weight = current[2].inputs.get_biggest_weight()
+
                 child0 = current[2].set_input(index,0)
                 child1 = current[2].set_input(index,1)
                 count += 1
@@ -709,7 +711,7 @@ class IntClassifier(Classifier):
         plt.axhline(y = y2[size], color = 'red', linestyle = '--')
         #plt.show()
 
-
+            
     def make_image(self,passing,failing,filedir):
         import numpy as np
         from matplotlib import pyplot as plt
@@ -721,7 +723,7 @@ class IntClassifier(Classifier):
         digit = [int(x) for x in digit]
         label = digit.pop()
         digit = np.array(digit)
-
+        
         '''
         x = 2
         if label == 1:
@@ -767,7 +769,7 @@ class IntClassifier(Classifier):
             digit = digit.reshape(28,28)
             plt.imshow(digit, cmap='gray')
             plt.savefig('img.png', cmap='gray')
-
+     
         if label == 0:
             for i in range(len(failing)):
                 failing[i].remove_nonreducing_f()
@@ -783,7 +785,7 @@ class IntClassifier(Classifier):
             digit = digit.reshape(28,28)
             plt.imshow(digit, cmap='gray')
             plt.savefig('img.png', cmap='gray')
-     
+            
             
     def remove_nonreducing(self):
         valarr = list(self.inputs.setting.values())
@@ -805,7 +807,7 @@ class IntClassifier(Classifier):
             if valarr[x][0] == 1 and valarr[x][1] > 0:
                 self.inputs.setting.pop(keyarr[x])
         
-    
+
         
             
 
