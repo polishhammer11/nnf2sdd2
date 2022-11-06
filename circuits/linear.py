@@ -629,10 +629,10 @@ class IntClassifier(Classifier):
                 return i
 
         # AC: this line should not normally be reached
-        return hi+1 # ACACAC
+        return 999999
 
     @staticmethod
-    def _add_to_closed(d,accum_weights,opened):
+    def _add_to_opened(d,accum_weights,opened):
         IntClassifier.id_count += 1
         depth,t,lb,ub = d
         gap = t-lb
@@ -649,24 +649,25 @@ class IntClassifier(Classifier):
         from queue import PriorityQueue        
 
         c = self
+        is_true =  lambda x: x[1] <= x[2]
+        is_false = lambda x: x[1] > x[3]
+
         IntClassifier.id_count = 0
         closed_list = []
         opened = PriorityQueue()
-        is_true =  lambda x: x[1] <= x[2]
-        is_false = lambda x: x[1] > x[3]
         sorted_weights,accum_weights = c._search_weights()
 
+        # initial threshold test
         depth = 0
         t = c.threshold
         lb = sum(w for w in sorted_weights if w < 0)
         ub = sum(w for w in sorted_weights if w > 0)
 
         d = (depth,t,lb,ub)
-        IntClassifier._add_to_closed(d,accum_weights,opened)
+        IntClassifier._add_to_opened(d,accum_weights,opened)
 
         true_count, false_count = 0,0
         lower_bound,upper_bound = 0,2**c.size
-        total_bound = 2**c.size
 
         while(not opened.empty()):
             f_cost,_,current = opened.get()
@@ -700,7 +701,7 @@ class IntClassifier(Classifier):
                     false_count += 1
                     upper_bound -= 2**(var_count-1)
                 else:
-                    IntClassifier._add_to_closed(child,accum_weights,opened)
+                    IntClassifier._add_to_opened(child,accum_weights,opened)
 
                 # set value to zero
                 new_t = t
@@ -709,7 +710,7 @@ class IntClassifier(Classifier):
                     false_count += 1
                     upper_bound -= 2**(var_count-1)
                 else:
-                    IntClassifier._add_to_closed(child,accum_weights,opened)
+                    IntClassifier._add_to_opened(child,accum_weights,opened)
 
         print("lower bound: ", lower_bound)
         print("upper bound: ", upper_bound)
@@ -734,7 +735,6 @@ class IntClassifier(Classifier):
         path_count = 0
         true_count, false_count = 0,0
         lower_bound,upper_bound = 0,2**c.size
-        total_bound = 2**c.size
 
         g_cost = len(c.inputs.setting)
         h_cost = c.inputs.settings_needed(c.gap())
