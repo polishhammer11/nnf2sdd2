@@ -313,19 +313,19 @@ class Classifier:
 
     def compile(self):
         assert self.is_integer
-        var_count = float(self.size)
+        var_count = int(self.size)
         matrix = [ dict() for _ in range(var_count+2) ]
         matrix[1][0] = None # root node
         for i in range(1,var_count+1):
             level,next_level = matrix[i],matrix[i+1]
-            weight = float(self.weights[i-1])
+            weight = int(self.weights[i-1])
             for node in level:
                 hi,lo = (node+weight,node)
                 level[node] = (hi,lo) # (hi,lo)
                 next_level[hi] = None
                 next_level[lo] = None
         last_level = matrix[var_count+1]
-        threshold = float(self.threshold)
+        threshold = int(self.threshold)
         for node in last_level:
             last_level[node] = node >= threshold
         return self._to_obdd(matrix)
