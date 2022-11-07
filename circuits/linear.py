@@ -344,11 +344,11 @@ class IntClassifier(Classifier):
         st = []
         st.append("name: %s" % self.name)
         st.append("size: %d" % self.size)
-        st.append("weights: %s" % " ".join(str(weight) for weight in self.weights))
+        #st.append("weights: %s" % " ".join(str(weight) for weight in self.weights))
         st.append("threshold: %.4f" % self.threshold)
         st.append("bounds: [%.4f,%.4f]" % \
                   (self.lowerbound(),self.upperbound()))
-        st.append("inputs:\n%s" % str(self.inputs))
+        #st.append("inputs:\n%s" % str(self.inputs))
         return "\n".join(st)
 
     @staticmethod
@@ -739,7 +739,7 @@ class IntClassifier(Classifier):
                     continue
             digit = digit.reshape(28,28)
             plt.imshow(digit, cmap='gray')
-            plt.savefig('img.png', cmap='gray')
+            plt.savefig('img.png')
        
         if label == 0:
             if(len(failing)>0):
@@ -768,7 +768,7 @@ class IntClassifier(Classifier):
                     continue
             digit = digit.reshape(28,28)
             plt.imshow(digit, cmap='gray')
-            plt.savefig('img.png', cmap='gray')
+            plt.savefig('img.png')
      
         if label == 0:
             for i in range(len(failing)):
@@ -784,7 +784,7 @@ class IntClassifier(Classifier):
                     continue
             digit = digit.reshape(28,28)
             plt.imshow(digit, cmap='gray')
-            plt.savefig('img.png', cmap='gray')
+            plt.savefig('img.png')
             
             
     def remove_nonreducing(self):
