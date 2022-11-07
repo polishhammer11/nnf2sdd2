@@ -406,7 +406,6 @@ class IntClassifier(Classifier):
             new_classifier.threshold -= value*weight
         return new_classifier
 
-
     def lowerbound(self):
         none_weights = [ weight for value,weight in self.inputs.setting.values() \
                          if value is None ]
@@ -611,14 +610,17 @@ class IntClassifier(Classifier):
         from itertools import accumulate
 
         weights = self.inputs.weights.values()
-        weights = [ w for w in weights if w != 0 ]
+        index_weights = list(enumerate(weights))
+        index_weights = [ iw for iw in index_weights if iw[1] != 0 ]
 
-        keyf = lambda x: abs(x)
-        sorted_weights = sorted(weights,key=keyf,reverse=True)
+        keyf = lambda iw: abs(iw[1])
+        sorted_index_weights = sorted(index_weights,key=keyf,reverse=True)
+        input_map = [ i for i,w in sorted_index_weights ]
+        sorted_weights = [ w for i,w in sorted_index_weights ]
         abs_weights = [ abs(w) for w in sorted_weights ]
         accum_weights = [0.0] + list(accumulate(abs_weights))
 
-        return sorted_weights, accum_weights
+        return sorted_weights, accum_weights, input_map
 
     @staticmethod
     def _find(sorted_list,target,lo=0):
@@ -634,7 +636,7 @@ class IntClassifier(Classifier):
     @staticmethod
     def _add_to_opened(d,accum_weights,opened):
         IntClassifier.id_count += 1
-        depth,t,lb,ub = d
+        depth,t,lb,ub,setting = d
         gap = t-lb
         if gap > 0:
             target = accum_weights[depth] + gap
@@ -655,15 +657,16 @@ class IntClassifier(Classifier):
         IntClassifier.id_count = 0
         closed_list = []
         opened = PriorityQueue()
-        sorted_weights,accum_weights = c._search_weights()
+        sorted_weights,accum_weights,input_map = c._search_weights()
 
         # initial threshold test
         depth = 0
         t = c.threshold
         lb = sum(w for w in sorted_weights if w < 0)
         ub = sum(w for w in sorted_weights if w > 0)
+        setting = []
 
-        d = (depth,t,lb,ub)
+        d = (depth,t,lb,ub,setting)
         IntClassifier._add_to_opened(d,accum_weights,opened)
 
         true_count, false_count = 0,0
@@ -671,7 +674,7 @@ class IntClassifier(Classifier):
 
         while(not opened.empty()):
             f_cost,_,current = opened.get()
-            depth,t,lb,ub = current
+            depth,t,lb,ub,setting = current
             var_count = c.size - depth
 
             if IntClassifier.id_count % 10000 == 0:
@@ -696,7 +699,8 @@ class IntClassifier(Classifier):
 
                 # set value to one
                 new_t = t-weight
-                child = (depth+1,new_t,new_lb,new_ub)
+                new_setting = setting + [1]
+                child = (depth+1,new_t,new_lb,new_ub,new_setting)
                 if is_false(child):
                     false_count += 1
                     upper_bound -= 2**(var_count-1)
@@ -705,7 +709,8 @@ class IntClassifier(Classifier):
 
                 # set value to zero
                 new_t = t
-                child = (depth+1,new_t,new_lb,new_ub)
+                new_setting = setting + [0]
+                child = (depth+1,new_t,new_lb,new_ub,new_setting)
                 if is_false(child):
                     false_count += 1
                     upper_bound -= 2**(var_count-1)
