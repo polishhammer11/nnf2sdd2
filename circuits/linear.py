@@ -961,7 +961,7 @@ class IntClassifier(Classifier):
                 else:
                     continue
             digit = digit.reshape(28,28)
-            plt.imshow(digit, cmap='gray')
+            plt.imshow(digit, cmap='gray', vmin=-1, vmax=2)
             plt.savefig('img.png')
      
         if label == 0:
@@ -977,7 +977,7 @@ class IntClassifier(Classifier):
                 else:
                     continue
             digit = digit.reshape(28,28)
-            plt.imshow(digit, cmap='gray')
+            plt.imshow(digit, cmap='gray', vmin=-1, vmax=2)
             plt.savefig('img.png')
             
             
