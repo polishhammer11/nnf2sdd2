@@ -94,8 +94,9 @@ if __name__ == '__main__':
     #print("Passing Tests")
 
 
-
-    c.a_star_graph(c.a_star_search(passing), c.a_star_search_f(failing))
+    #c.a_star_graph(c.a_star_search(passing), c.a_star_search_f(failing))
+    passing,failing = c.a_star_search_alt()
+    c.a_star_graph_alt(passing,failing)
     #c.breadth_first_search()
     c.make_image(passing,failing,digits)
 
@@ -113,7 +114,64 @@ if __name__ == '__main__':
     #failing.sort(key=lambda x: x.size)   #worst case sorted failing tests
     #c.print_bounds_graph(passing,failing)
 
-
+    """
     import matplotlib.pyplot as plt
     plt.show()
     
+    while True:
+        print("=== Lower Bound:")
+        c.lowerbound()
+        
+        print("=== Upper Bound:")
+        c.upperbound()
+        print()
+        c.fastmove()
+        c.checktriviality()
+        print()
+    
+        print("Select an Option")
+        print("1. Lower Upper Bound")
+        print("2. Raise Lower Bound")
+        print("3. Lower threshold")
+        print("4. Raise threshold")
+        choice = input()
+
+
+
+        if choice == "2":
+            c.lowerupperbound()
+            
+        if choice == "1":
+            c.raiselowerbound()
+        
+        if choice == "3":
+            c.lowerthreshold()
+
+        if choice == "4":
+            c.raisethreshold()
+        
+
+    
+    
+        print("")
+    
+        print("=== NEW NEURON:")
+        print(c)
+        assert c.is_integer
+        #c = c.with_precision(3)
+        #print("== quantized neuron:")
+        #print(c)
+    
+        print("")
+        obdd_manager,node = c.compile()
+        for model in node.models():
+            print_model(model)
+        
+        print("=== Lower Bound:")
+        c.lowerbound()
+    
+        print("=== Upper Bound:")
+        c.upperbound()
+        if(c.size=="0"):
+            break
+    """
