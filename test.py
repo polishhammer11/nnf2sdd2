@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
 
     passing,failing = c.a_star_search_alt()
-    #c.a_star_graph(c.a_star_search(), c.a_star_search_f())
+    c.a_star_graph_alt(passing,failing)
     #c.breadth_first_search()
 
 

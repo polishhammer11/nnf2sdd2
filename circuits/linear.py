@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
 import math
+from itertools import accumulate
 from decimal import Decimal
+
 from .obdd import ObddManager, ObddNode
 from .timer import Timer
+
 
 class Inputs:
     """AC: represent this as a priority queue?  This would 
@@ -619,8 +622,6 @@ class IntClassifier(Classifier):
         return fq
 
     def _search_weights(self):
-        from itertools import accumulate
-
         weights = self.inputs.weights.values()
         index_weights = list(enumerate(weights))
         index_weights = [ iw for iw in index_weights if iw[1] != 0 ]
@@ -743,8 +744,11 @@ class IntClassifier(Classifier):
         print("lower bound: ", lower_bound)
         print("upper bound: ", upper_bound)
 
+        """
+        # convert settings into copies of classifiers (very slow)
         failing = [ c.set_inputs(input_map,setting) for setting in failing ]
         passing = [ c.set_inputs(input_map,setting) for setting in passing ]
+        """
 
         """
         closed = PriorityQueue()
@@ -899,17 +903,24 @@ class IntClassifier(Classifier):
         #plt.show()
 
             
-        
-        
-     
-            
-            
+    def a_star_graph_alt(self,passing,failing):
+        import numpy as np
+        import matplotlib.pyplot as plt
 
-        
-            
+        n = self.size # number of variables
 
-        
+        lower_counts = [0] + [ 2**(n-len(cur)) for cur in passing ]
+        lower_bound = np.cumsum(lower_counts)
 
+        upper_counts = [0] + [ 2**(n-len(cur)) for cur in failing ]
+        upper_bound = 2**n - np.cumsum(upper_counts)
+
+        plt.plot(np.arange(len(lower_bound)),lower_bound)
+        plt.plot(np.arange(len(upper_bound)),upper_bound)
+        plt.axhline(lower_bound[-1], color = 'red', linestyle = '--')
+        plt.xlabel('# of explanations')
+        plt.ylabel('model count')
+        plt.show()
 
 
 
