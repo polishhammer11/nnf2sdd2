@@ -671,17 +671,21 @@ class IntClassifier(Classifier):
 
         true_count, false_count = 0,0
         lower_bound,upper_bound = 0,2**c.size
+        print_me = 1
 
         while(not opened.empty()):
             f_cost,_,current = opened.get()
             depth,t,lb,ub,setting = current
             var_count = c.size - depth
 
-            if IntClassifier.id_count % 10000 == 0:
-                osize = opened.qsize()
-                csize = len(closed_list)
-                print("open/closed (cost): %d,%d (%d)" % (osize,csize,f_cost))
-                print("true/false: %d,%d" % (true_count,false_count))
+            if IntClassifier.id_count % print_me == 0:
+                print_me = print_me * 2
+                #osize = opened.qsize()
+                #csize = len(closed_list)
+                #print("open/closed (cost): %d,%d (%d)" % (osize,csize,f_cost))
+                #print("true/false: %d,%d" % (true_count,false_count))
+                bound_gap = (upper_bound-lower_bound)/2**c.size
+                print("gap: %.4f%% (f-cost: %d)" % (bound_gap,f_cost))
 
             if is_false(current):
                 false_count += 1
@@ -717,6 +721,8 @@ class IntClassifier(Classifier):
                 else:
                     IntClassifier._add_to_opened(child,accum_weights,opened)
 
+        bound_gap = (upper_bound-lower_bound)/2**c.size
+        print("gap: %.4f%% (f-cost: %d)" % (bound_gap,f_cost))
         print("lower bound: ", lower_bound)
         print("upper bound: ", upper_bound)
 
