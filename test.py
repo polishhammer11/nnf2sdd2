@@ -40,7 +40,7 @@ if __name__ == '__main__':
     #print("Passing Tests")
 
 
-    c.a_star_search_alt()
+    passing,failing = c.a_star_search_alt()
     #c.a_star_graph(c.a_star_search(), c.a_star_search_f())
     #c.breadth_first_search()
 
@@ -66,11 +66,10 @@ if __name__ == '__main__':
     #failing.sort(key=lambda x: x.size)   #worst case sorted failing tests
     #c.print_bounds_graph(passing,failing)
 
-
+    """
     import matplotlib.pyplot as plt
     plt.show()
     
-    """
     while True:
         print("=== Lower Bound:")
         c.lowerbound()

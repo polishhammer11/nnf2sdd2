@@ -406,6 +406,18 @@ class IntClassifier(Classifier):
             new_classifier.threshold -= value*weight
         return new_classifier
 
+    def set_inputs(self,indices,values):
+        """return a new copy of the classifier where the all
+        input/value pairs in setting have been applied"""
+
+        new_classifier = self.copy()
+        for index,value in zip(indices,values):
+            weight = new_classifier.inputs.set(index,value)
+            new_classifier.size -= 1
+            if value != 0 and value is not None:
+                new_classifier.threshold -= value*weight
+        return new_classifier
+
     def lowerbound(self):
         none_weights = [ weight for value,weight in self.inputs.setting.values() \
                          if value is None ]
@@ -671,6 +683,7 @@ class IntClassifier(Classifier):
 
         true_count, false_count = 0,0
         lower_bound,upper_bound = 0,2**c.size
+        passing, failing = [],[]
         print_me = 1
 
         while(not opened.empty()):
@@ -689,10 +702,12 @@ class IntClassifier(Classifier):
 
             if is_false(current):
                 false_count += 1
+                failing.append(setting)
                 upper_bound -= 2**var_count
             elif is_true(current):
                 true_count += 1
                 closed_list.append(current)
+                passing.append(setting)
                 lower_bound += 2**var_count
             else:
                 weight = sorted_weights[depth]
@@ -707,6 +722,7 @@ class IntClassifier(Classifier):
                 child = (depth+1,new_t,new_lb,new_ub,new_setting)
                 if is_false(child):
                     false_count += 1
+                    failing.append(new_setting)
                     upper_bound -= 2**(var_count-1)
                 else:
                     IntClassifier._add_to_opened(child,accum_weights,opened)
@@ -717,6 +733,7 @@ class IntClassifier(Classifier):
                 child = (depth+1,new_t,new_lb,new_ub,new_setting)
                 if is_false(child):
                     false_count += 1
+                    failing.append(new_setting)
                     upper_bound -= 2**(var_count-1)
                 else:
                     IntClassifier._add_to_opened(child,accum_weights,opened)
@@ -726,11 +743,16 @@ class IntClassifier(Classifier):
         print("lower bound: ", lower_bound)
         print("upper bound: ", upper_bound)
 
+        failing = [ c.set_inputs(input_map,setting) for setting in failing ]
+        passing = [ c.set_inputs(input_map,setting) for setting in passing ]
+
+        """
         closed = PriorityQueue()
         for item in closed_list:
             closed.put(item)
         return closed
-        
+        """
+        return passing,failing
 
     def a_star_search(self):
         #import pdb
