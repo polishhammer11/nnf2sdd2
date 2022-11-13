@@ -14,7 +14,7 @@ train_features = dataset
 train_labels = train_features.pop("1.48")
 
 
-model = LogisticRegression(penalty='l1',solver='liblinear',C=.002) #tol=1e-8
+model = LogisticRegression(penalty='l1',solver='liblinear',C=.002,random_state=0) #tol=1e-8
 classifier = model.fit(train_features,train_labels)
 train_accuracy = 100*classifier.score(train_features,train_labels)
 print("LogisticRegression: %.8f%% (training accuracy)" % (train_accuracy,))

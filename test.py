@@ -24,7 +24,7 @@ def create_neuron(filedir):
     train_features = dataset
     train_labels = train_features.pop("Label")
         
-    model = LogisticRegression(penalty='l1',solver='liblinear',C=.002) # tol=1e-8,
+    model = LogisticRegression(penalty='l1',solver='liblinear',C=.001,random_state=0) # tol=1e-8b,
     classifier = model.fit(train_features,train_labels)
     train_accuracy = 100*classifier.score(train_features,train_labels)
     print("LogisticRegression: %.8f%% (training accuracy)" % (train_accuracy,))
@@ -36,7 +36,6 @@ def create_neuron(filedir):
     b = np.array(model.intercept_) 
     acc = sum((A@w > -b).flatten() == y)/len(y)
     print("       my accuracy: %.8f%%" % (100*acc,))
-
 
     #creating file
     arr = model.coef_[0]
@@ -101,8 +100,6 @@ if __name__ == '__main__':
     # NEW FASTER SEARCH
     #passing,failing = c.a_star_search_alt()
     #c.a_star_graph_alt(passing,failing)
-
-
 
     #c.a_star_graph(c.breadth_first_search(),c.breadth_first_search_f()) #passing and failing models
     #c.print_all_true_models(passing) #using depth-first search
