@@ -4,5 +4,6 @@
 
 ## AUTHORS
 
-Richard Borowski <rborowsk@students.kennesaw.edu>
+Richard Borowski <rborowsk@students.kennesaw.edu>   
 Arthur Choi <achoi13@kennesaw.edu>
+
