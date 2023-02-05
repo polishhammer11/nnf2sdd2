@@ -556,9 +556,9 @@ class IntClassifier(Classifier):
             x2.append(i+1)
             y2.append(y2[i] - 2**len(failing[i].inputs.weights))
         
-        plt.axhline(y = y2[len(failing)], color = 'red', linestyle = '--')
-        plt.plot(x,y,marker='o',markersize=1)
-        plt.plot(x2,y2,marker = 'o', markersize=1)
+        plt.axhline(y = y2[len(failing)], color = 'black', linestyle = '--')
+        plt.plot(x,y,color = 'blue',linestyle = '-.')
+        plt.plot(x2,y2,color = 'red',linestyle = "-.")
         #plt.show()
 
     def breadth_first_search(self):
@@ -756,7 +756,122 @@ class IntClassifier(Classifier):
             closed.put(item)
         return closed
         """
-        return passing,failing
+        return passing,failing,input_map
+
+
+    def _add_to_opened_f(d,accum_weights,opened):
+        IntClassifier.id_count += 1
+        depth,t,lb,ub,setting = d
+        gap = ub-t
+        if gap > 0:
+            target = accum_weights[depth] + gap
+            h_cost = IntClassifier._find(accum_weights,target,lo=depth+1)
+        else: # already at goal
+            h_cost = 0
+        f_cost = depth + h_cost
+        node = (f_cost,-IntClassifier.id_count,d)
+        opened.put(node)
+
+
+    def a_star_search_alt_f(self):
+        
+        from queue import PriorityQueue        
+
+        c = self
+        is_true =  lambda x: x[1] <= x[2]
+        is_false = lambda x: x[1] > x[3]
+
+        IntClassifier.id_count = 0
+        closed_list = []
+        opened = PriorityQueue()
+        sorted_weights,accum_weights,input_map = c._search_weights()
+
+        # initial threshold test
+        depth = 0
+        t = c.threshold
+        lb = sum(w for w in sorted_weights if w < 0)
+        ub = sum(w for w in sorted_weights if w > 0)
+        setting = []
+
+        d = (depth,t,lb,ub,setting)
+        IntClassifier._add_to_opened_f(d,accum_weights,opened)
+
+        true_count, false_count = 0,0
+        lower_bound,upper_bound = 0,2**c.size
+        passing, failing = [],[]
+        print_me = 1
+
+        while(not opened.empty()):
+            f_cost,_,current = opened.get()
+            depth,t,lb,ub,setting = current
+            var_count = c.size - depth
+
+            if IntClassifier.id_count % print_me == 0:
+                print_me = print_me * 2
+                #osize = opened.qsize()
+                #csize = len(closed_list)
+                #print("open/closed (cost): %d,%d (%d)" % (osize,csize,f_cost))
+                #print("true/false: %d,%d" % (true_count,false_count))
+                bound_gap = (upper_bound-lower_bound)/2**c.size
+                #print("gap: %.4f%% (f-cost: %d)" % (bound_gap,f_cost))
+
+            if is_false(current):
+                false_count += 1
+                failing.append(setting)
+                upper_bound -= 2**var_count
+            elif is_true(current):
+                true_count += 1
+                closed_list.append(current)
+                passing.append(setting)
+                lower_bound += 2**var_count
+            else:
+                weight = sorted_weights[depth]
+
+                # update lower/upper bounds
+                if weight > 0: new_lb,new_ub = lb,ub-weight
+                else:          new_lb,new_ub = lb-weight,ub
+
+                # set value to one
+                new_t = t-weight
+                new_setting = setting + [1]
+                child = (depth+1,new_t,new_lb,new_ub,new_setting)
+                if is_false(child):
+                    false_count += 1
+                    failing.append(new_setting)
+                    upper_bound -= 2**(var_count-1)
+                else:
+                    IntClassifier._add_to_opened_f(child,accum_weights,opened)
+
+                # set value to zero
+                new_t = t
+                new_setting = setting + [0]
+                child = (depth+1,new_t,new_lb,new_ub,new_setting)
+                if is_false(child):
+                    false_count += 1
+                    failing.append(new_setting)
+                    upper_bound -= 2**(var_count-1)
+                else:
+                    IntClassifier._add_to_opened_f(child,accum_weights,opened)
+
+        bound_gap = (upper_bound-lower_bound)/2**c.size
+        print("gap: %.4f%% (f-cost: %d)" % (bound_gap,f_cost))
+        print("lower bound: ", lower_bound)
+        print("upper bound: ", upper_bound)
+
+        """
+        # convert settings into copies of classifiers (very slow)
+        failing = [ c.set_inputs(input_map,setting) for setting in failing ]
+        passing = [ c.set_inputs(input_map,setting) for setting in passing ]
+        """
+
+        """
+        closed = PriorityQueue()
+        for item in closed_list:
+            closed.put(item)
+        return closed
+        """
+        return passing,failing,input_map
+
 
     def a_star_search(self,passing):
         #import pdb
@@ -828,6 +943,9 @@ class IntClassifier(Classifier):
             closed.put(item)
         return closed
                 
+
+
+
 
     def a_star_search_f(self,failing):
         #import pdb
@@ -903,17 +1021,36 @@ class IntClassifier(Classifier):
         plt.plot(x,y,marker='*',markersize=1)
         plt.plot(x2,y2,marker='*',markersize=1)
         plt.axhline(y = y2[size], color = 'red', linestyle = '--')
+
         #plt.show()
 
             
     def make_image(self,passing,failing,filedir):
         import numpy as np
+        import matplotlib
         from matplotlib import pyplot as plt
         #import pdb
         #pdb.set_trace()
         
+
+        fs = 18 # fontsize
+        matplotlib.rcParams.update({'xtick.labelsize': fs, 'ytick.labelsize': fs,
+                 'figure.autolayout': True})
+
+        #matplotlib.rcParams.update({'figure.autolayout': True})
+
+        font = {'family' : 'sans-serif',
+                'weight' : 'normal',
+                'size'   : 15}
+        matplotlib.rc('font', **font)
+
+        plt.tick_params(left = False, right = False , labelleft = False ,
+                        labelbottom = False, bottom = False)
+  
+
+
         with open(filedir, 'r') as f:
-            digit = f.readlines()[8].split(',')
+            digit = f.readlines()[5].split(',')
         digit = [int(x) for x in digit]
         label = digit.pop()
         digit = np.array(digit)
@@ -962,7 +1099,7 @@ class IntClassifier(Classifier):
                     continue
             digit = digit.reshape(28,28)
             plt.imshow(digit, cmap='gray', vmin=-1, vmax=2)
-            plt.savefig('img.png')
+            plt.savefig('digit.pdf')
      
         if label == 0:
             for i in range(len(failing)):
@@ -978,7 +1115,8 @@ class IntClassifier(Classifier):
                     continue
             digit = digit.reshape(28,28)
             plt.imshow(digit, cmap='gray', vmin=-1, vmax=2)
-            plt.savefig('img.png')
+            plt.savefig('digit.pdf')
+        plt.show()
             
             
     def remove_nonreducing(self):
@@ -1003,7 +1141,23 @@ class IntClassifier(Classifier):
         
     def a_star_graph_alt(self,passing,failing):
         import numpy as np
+        import matplotlib
         import matplotlib.pyplot as plt
+        import math
+        
+        fs = 18 # fontsize
+        matplotlib.rcParams.update({'xtick.labelsize': fs, 'ytick.labelsize': fs,
+                 'figure.autolayout': True})
+
+        #matplotlib.rcParams.update({'figure.autolayout': True})
+
+        font = {'family' : 'sans-serif',
+                'weight' : 'normal',
+                'size'   : 15}
+        matplotlib.rc('font', **font)
+
+        matplotlib.rcParams['pdf.fonttype'] = 42
+        
 
         n = self.size # number of variables
 
@@ -1012,13 +1166,140 @@ class IntClassifier(Classifier):
 
         upper_counts = [0] + [ 2**(n-len(cur)) for cur in failing ]
         upper_bound = 2**n - np.cumsum(upper_counts)
-
-        plt.plot(np.arange(len(lower_bound)),lower_bound)
-        plt.plot(np.arange(len(upper_bound)),upper_bound)
+        
+        #plt.yscale("log") 
+        plt.plot(np.arange(len(lower_bound)),lower_bound,color='blue')
+        plt.plot(np.arange(len(upper_bound)),upper_bound,color='red')
         plt.axhline(lower_bound[-1], color = 'red', linestyle = '--')
         plt.xlabel('# of explanations')
         plt.ylabel('model count')
-        plt.show()
+        plt.savefig("boundsplot.pdf") 
+        #plt.show()
+
+
+    def voting_analysis(self, passing, failing):
+        #import pdb
+        #pdb.set_trace()
+        
+        passkeys = passing[0].inputs.setting.keys()
+        passvals = passing[0].inputs.setting.values()
+        failkeys = failing[0].inputs.setting.keys()
+        failvals = failing[0].inputs.setting.values()
+        print("democrat",passing[0].inputs.setting)
+        print("republican",failing[0].inputs.setting)
+
+
+    
+        
+    def vote_desc(self,passing,failing,filedir):
+        import numpy as np
+        from matplotlib import pyplot as plt
+        #import pdb
+        #pdb.set_trace()
+        
+        with open(filedir, 'r') as f:
+            voter = f.readlines()[0].split(',')
+    
+        voter = np.array(voter)
+        se = []
+        print(voter)
+        for x in failing[0].inputs.setting.keys():
+            vo = x,failing[0].inputs.setting[x][0]
+            se.append(vo)
+        se = sorted(se)
+        print(se)  
+        
+    
+    def pick_first(self,passing,failing):
+        #import pdb;
+        #pdb.set_trace()
+        
+        c = self
+        
+        if c.is_trivially_true():
+            #print()
+            #print(c.inputs)
+            passing.append(c)
+            return
+            
+
+        if c.is_trivially_false():
+            failing.append(c)
+            return
+        
+        ran = c.inputs.weights.keys()
+        for x in ran:
+            if c.inputs.weights[x]!=0:
+                index,weight = x,c.inputs.weights[x]
+        
+       
+        if(weight<0):
+            b = c.set_input(index,0)
+            b.pick_first(passing,failing)
+
+            a = c.set_input(index,1)
+            a.pick_first(passing,failing)
+        else:    
+            a = c.set_input(index,1)
+            a.pick_first(passing,failing)
+
+            b = c.set_input(index,0)
+            b.pick_first(passing,failing)
+
+
+    def pick_first_graph(self,passing,failing):
+        c = self
+        import matplotlib.pyplot as plt
+        x = [0]
+        y = [0]
+        for i in range(len(passing)):
+            x.append(i+1)
+            y.append(y[i] + 2**len(passing[i].inputs.weights))
+        f = 0
+        f += 2**c.size
+
+        x2 = [0] 
+        y2 = [f] 
+        for i in range(len(failing)):
+            x2.append(i+1)
+            y2.append(y2[i] - 2**len(failing[i].inputs.weights))
+        
+        plt.axhline(y = y2[len(failing)], color = 'black', linestyle = '--')
+        plt.plot(x,y,color = 'blue',linestyle = 'dotted')
+        plt.plot(x2,y2,color = 'red',linestyle = "dotted")
+        #plt.show()
+
+
+    def num_of_votes(self,num,filedir):
+        #import pdb
+        #pdb.set_trace()
+        with open(filedir, "r") as file:
+            lines = file.readlines()
+        lines = [line.rstrip().split(",") for line in lines]
+
+        repy = 0
+        repn = 0
+        demy = 0
+        demn = 0
+        for subarray in lines:
+            if(subarray[0] == 'republican'):
+                if(subarray[num] == 'y'):
+                    repy += 1
+                if(subarray[num] == 'n'):
+                    repn += 1
+            if(subarray[0] == 'democrat'):
+                if(subarray[num] == 'y'):
+                    demy += 1
+                if(subarray[num] == 'n'):
+                    demn += 1
+                
+        print("republican y:",repy)
+        print("republican n:",repn)
+        print("democrat y:",demy)
+        print("democrat n:",demn)
+                    
+                    
+
 
 
 
