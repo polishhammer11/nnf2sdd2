@@ -470,7 +470,8 @@ class IntClassifier(Classifier):
         #print(c)
         return c
 
-    def _dfs(self,passing,failing,sorted_weights,classifier,find_true=True):
+    def _dfs_greedy(self,passing,failing,sorted_weights,classifier,find_true=True):
+        classifier = IntClassifier._round_small_numbers(classifier) # ACACAC
         depth,t,lb,ub,setting = classifier
         ft = find_true
 
@@ -494,27 +495,27 @@ class IntClassifier(Classifier):
             new_t = t
             new_setting = setting + [0]
             child = (depth+1,new_t,new_lb,new_ub,new_setting)
-            self._dfs(passing,failing,sorted_weights,child,find_true=ft)
+            self._dfs_greedy(passing,failing,sorted_weights,child,find_true=ft)
 
             # set value to one
             new_t = t-weight
             new_setting = setting + [1]
             child = (depth+1,new_t,new_lb,new_ub,new_setting)
-            self._dfs(passing,failing,sorted_weights,child,find_true=ft)
+            self._dfs_greedy(passing,failing,sorted_weights,child,find_true=ft)
         else:
             # set value to one
             new_t = t-weight
             new_setting = setting + [1]
             child = (depth+1,new_t,new_lb,new_ub,new_setting)
-            self._dfs(passing,failing,sorted_weights,child,find_true=ft)
+            self._dfs_greedy(passing,failing,sorted_weights,child,find_true=ft)
 
             # set value to zero
             new_t = t
             new_setting = setting + [0]
             child = (depth+1,new_t,new_lb,new_ub,new_setting)
-            self._dfs(passing,failing,sorted_weights,child,find_true=ft)
+            self._dfs_greedy(passing,failing,sorted_weights,child,find_true=ft)
         
-    def dfs(self,find_true=True):
+    def dfs_greedy(self,find_true=True):
         sorted_weights,accum_weights,input_map = self._search_weights()
         depth = 0
         t = self.threshold
@@ -524,8 +525,67 @@ class IntClassifier(Classifier):
         d = (depth,t,lb,ub,setting)
 
         passing,failing = [],[]
-        self._dfs(passing,failing,sorted_weights,d,find_true=find_true)
+        self._dfs_greedy(passing,failing,sorted_weights,d,find_true=find_true)
         return passing,failing
+
+    def _dfs_naive(self,passing,failing,weights,classifier):
+        classifier = IntClassifier._round_small_numbers(classifier) # ACACAC
+        depth,t,lb,ub,setting = classifier
+
+        is_true =  lambda x: x[1] <= x[2]
+        is_false = lambda x: x[1] > x[3]
+
+        if is_true(classifier):
+            passing.append(setting)
+            return
+        if is_false(classifier):
+            failing.append(setting)
+            return
+
+        weight = weights[depth]
+        # update lower/upper bounds
+        if weight > 0: new_lb,new_ub = lb,ub-weight
+        else:          new_lb,new_ub = lb-weight,ub
+
+        if weight < 0:
+            # set value to zero
+            new_t = t
+            new_setting = setting + [0]
+            child = (depth+1,new_t,new_lb,new_ub,new_setting)
+            self._dfs_naive(passing,failing,weights,child)
+
+            # set value to one
+            new_t = t-weight
+            new_setting = setting + [1]
+            child = (depth+1,new_t,new_lb,new_ub,new_setting)
+            self._dfs_naive(passing,failing,weights,child)
+        else:
+            # set value to one
+            new_t = t-weight
+            new_setting = setting + [1]
+            child = (depth+1,new_t,new_lb,new_ub,new_setting)
+            self._dfs_naive(passing,failing,weights,child)
+
+            # set value to zero
+            new_t = t
+            new_setting = setting + [0]
+            child = (depth+1,new_t,new_lb,new_ub,new_setting)
+            self._dfs_naive(passing,failing,weights,child)
+
+
+    def dfs_naive(self):
+        weights = self._nonzero_weights()
+        depth = 0
+        t = self.threshold
+        lb = sum(w for w in weights if w < 0)
+        ub = sum(w for w in weights if w > 0)
+        setting = []
+        d = (depth,t,lb,ub,setting)
+
+        passing,failing = [],[]
+        self._dfs_naive(passing,failing,weights,d)
+        return passing,failing
+
 
     def print_all_true_models(self,explanationsize):
         
@@ -691,6 +751,10 @@ class IntClassifier(Classifier):
 
         return sorted_weights, accum_weights, input_map
 
+    def _nonzero_weights(self):
+        weights = self.inputs.weights.values()
+        return [ w for w in weights if w != 0.0 ]
+
     @staticmethod
     def _find(sorted_list,target,lo=0):
         hi = len(sorted_list)
@@ -705,6 +769,7 @@ class IntClassifier(Classifier):
     @staticmethod
     def _add_to_opened(d,accum_weights,opened):
         IntClassifier.id_count += 1
+        d = IntClassifier._round_small_numbers(d) # ACACAC
         depth,t,lb,ub,setting = d
         gap = t-lb
         if gap > 0:
@@ -715,6 +780,15 @@ class IntClassifier(Classifier):
         f_cost = depth + h_cost
         node = (f_cost,-IntClassifier.id_count,d)
         opened.put(node)
+
+    @staticmethod
+    def _round_small_numbers(classifier):
+        eps = 1e-10 # ACACAC
+        depth,t,lb,ub,setting = classifier
+        if abs(t) < eps:  t = 0
+        if abs(lb) < eps: lb = 0
+        if abs(ub) < eps: ub = 0
+        return (depth,t,lb,ub,setting)
 
     def a_star_search_alt(self):
         from queue import PriorityQueue        
@@ -817,6 +891,7 @@ class IntClassifier(Classifier):
 
     def _add_to_opened_f(d,accum_weights,opened):
         IntClassifier.id_count += 1
+        d = IntClassifier._round_small_numbers(d) # ACACAC
         depth,t,lb,ub,setting = d
         gap = ub-t
         if gap > 0:
@@ -1195,7 +1270,7 @@ class IntClassifier(Classifier):
             if valarr[x][0] == 1 and valarr[x][1] > 0:
                 self.inputs.setting.pop(keyarr[x])
         
-    def a_star_graph_alt(self,passing,failing):
+    def a_star_graph_alt(self,passing,failing,linestyle='-'):
         import numpy as np
         import matplotlib
         import matplotlib.pyplot as plt
@@ -1224,8 +1299,8 @@ class IntClassifier(Classifier):
         upper_bound = 2**n - np.cumsum(upper_counts)
         
         #plt.yscale("log") 
-        plt.plot(np.arange(len(lower_bound)),lower_bound,color='blue')
-        plt.plot(np.arange(len(upper_bound)),upper_bound,color='red')
+        plt.plot(np.arange(len(lower_bound)),lower_bound,color='blue',linestyle=linestyle)
+        plt.plot(np.arange(len(upper_bound)),upper_bound,color='red',linestyle=linestyle)
         plt.axhline(lower_bound[-1], color = 'red', linestyle = '--')
         plt.xlabel('# of explanations')
         plt.ylabel('model count')

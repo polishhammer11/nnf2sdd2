@@ -24,7 +24,7 @@ def create_neuron(filedir):
     train_features = dataset
     train_labels = train_features.pop("Label")
         
-    model = LogisticRegression(penalty='l1',solver='liblinear',C=.0021,random_state=1) # tol=1e-8b,
+    model = LogisticRegression(penalty='l1',solver='liblinear',C=.002,random_state=1) # tol=1e-8b,
     #model = LogisticRegression(penalty='l1',solver='liblinear')
     classifier = model.fit(train_features,train_labels)
     train_accuracy = 100*classifier.score(train_features,train_labels)
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         
     #Digits Classification Image
     c.make_image(some_passing,some_failing,digits)
-    c.a_star_graph_alt(passing, failingf)
+    c.a_star_graph_alt(passing,failingf,linestyle="-")
 
 
     #Voting Records Analysis
@@ -214,10 +214,10 @@ if __name__ == '__main__':
 
 
     print("SEARCH THREE:")
-    dfs_passing,_ = c.dfs(find_true=True)
+    dfs_passing,_ = c.dfs_greedy(find_true=True)
     print("SEARCH FOUR:")
-    _,dfs_failing = c.dfs(find_true=False)
-    c.a_star_graph_alt(dfs_passing, dfs_failing)
+    _,dfs_failing = c.dfs_greedy(find_true=False)
+    c.a_star_graph_alt(dfs_passing,dfs_failing,linestyle="-.")
 
 
     #passing.sort(key=lambda x: x.size, reverse = True) #best case sorted passing tests
@@ -230,8 +230,12 @@ if __name__ == '__main__':
 
     
     print("SEARCH FIVE:")
+    """
     c.pick_first(passingp,failingp)
     c.pick_first_graph(passingp,failingp)
+    """
+    naive_passing,naive_failing = c.dfs_naive()
+    c.a_star_graph_alt(naive_passing,naive_failing,linestyle=":")
 
     #c.print_bounds_graph(passing,failing)
 
