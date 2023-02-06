@@ -469,7 +469,63 @@ class IntClassifier(Classifier):
         #print("=== trivial classifier:")
         #print(c)
         return c
+
+    def _dfs(self,passing,failing,sorted_weights,classifier,find_true=True):
+        depth,t,lb,ub,setting = classifier
+        ft = find_true
+
+        is_true =  lambda x: x[1] <= x[2]
+        is_false = lambda x: x[1] > x[3]
+
+        if is_true(classifier):
+            passing.append(setting)
+            return
+        if is_false(classifier):
+            failing.append(setting)
+            return
+
+        weight = sorted_weights[depth]
+        # update lower/upper bounds
+        if weight > 0: new_lb,new_ub = lb,ub-weight
+        else:          new_lb,new_ub = lb-weight,ub
+
+        if ( find_true and weight < 0 ) or ( not find_true and weight > 0 ):
+            # set value to zero
+            new_t = t
+            new_setting = setting + [0]
+            child = (depth+1,new_t,new_lb,new_ub,new_setting)
+            self._dfs(passing,failing,sorted_weights,child,find_true=ft)
+
+            # set value to one
+            new_t = t-weight
+            new_setting = setting + [1]
+            child = (depth+1,new_t,new_lb,new_ub,new_setting)
+            self._dfs(passing,failing,sorted_weights,child,find_true=ft)
+        else:
+            # set value to one
+            new_t = t-weight
+            new_setting = setting + [1]
+            child = (depth+1,new_t,new_lb,new_ub,new_setting)
+            self._dfs(passing,failing,sorted_weights,child,find_true=ft)
+
+            # set value to zero
+            new_t = t
+            new_setting = setting + [0]
+            child = (depth+1,new_t,new_lb,new_ub,new_setting)
+            self._dfs(passing,failing,sorted_weights,child,find_true=ft)
         
+    def dfs(self,find_true=True):
+        sorted_weights,accum_weights,input_map = self._search_weights()
+        depth = 0
+        t = self.threshold
+        lb = sum(w for w in sorted_weights if w < 0)
+        ub = sum(w for w in sorted_weights if w > 0)
+        setting = []
+        d = (depth,t,lb,ub,setting)
+
+        passing,failing = [],[]
+        self._dfs(passing,failing,sorted_weights,d,find_true=find_true)
+        return passing,failing
 
     def print_all_true_models(self,explanationsize):
         

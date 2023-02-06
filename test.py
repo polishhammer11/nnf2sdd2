@@ -24,7 +24,7 @@ def create_neuron(filedir):
     train_features = dataset
     train_labels = train_features.pop("Label")
         
-    model = LogisticRegression(penalty='l1',solver='liblinear',C=.002,random_state=1) # tol=1e-8b,
+    model = LogisticRegression(penalty='l1',solver='liblinear',C=.0021,random_state=1) # tol=1e-8b,
     #model = LogisticRegression(penalty='l1',solver='liblinear')
     classifier = model.fit(train_features,train_labels)
     train_accuracy = 100*classifier.score(train_features,train_labels)
@@ -173,17 +173,11 @@ if __name__ == '__main__':
 
 
 
-
-    
-
-
     # NEW FASTER SEARCH
-
+    print("SEARCH ONE:")
     passing,failing,input_map = c.a_star_search_alt()
-
+    print("SEARCH TWO:")
     passingf,failingf,input_mapf = c.a_star_search_alt_f()
-
-
     #import pdb
     #pdb.set_trace()
     
@@ -209,15 +203,33 @@ if __name__ == '__main__':
     passingp=[]
     failingp=[]
     #c.a_star_graph(c.breadth_first_search(),c.breadth_first_search_f()) #passing and failing models
+
+    """
+    print("SEARCH THREE:")
     c.print_all_true_models(passingd) #using depth-first search
+    print("SEARCH FOUR:")
     c.print_all_false_models(failingd)#using depth-first search
     c.print_bounds_graph(passingd,failingd) 
+    """
+
+
+    print("SEARCH THREE:")
+    dfs_passing,_ = c.dfs(find_true=True)
+    print("SEARCH FOUR:")
+    _,dfs_failing = c.dfs(find_true=False)
+    c.a_star_graph_alt(dfs_passing, dfs_failing)
+
+
     #passing.sort(key=lambda x: x.size, reverse = True) #best case sorted passing tests
     #failing.sort(key=lambda x: x.size, reverse = True) #best case sorted failing tests
     #c.print_bounds_graph(passing,failing)
     #passing.sort(key=lambda x: x.size)   #worst case sorted passing tests
     #failing.sort(key=lambda x: x.size)   #worst case sorted failing tests
+
+
+
     
+    print("SEARCH FIVE:")
     c.pick_first(passingp,failingp)
     c.pick_first_graph(passingp,failingp)
 
