@@ -133,8 +133,8 @@ if __name__ == '__main__':
     #digitsr = 'testing/congressionalvoting/neuron/congressionalvoting.neuron'
     
 
-
-    digits = 'testing/digitclassification/csv/train-0-1.txt'
+    i,j = 3,8
+    digits = 'testing/digitclassification/csv/train-%d-%d.txt' % (i,j)
     create_neuron(digits)
     digitsr = 'testing/digitclassification/neuron/digitclassification.neuron'
 
