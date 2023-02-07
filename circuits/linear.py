@@ -1277,45 +1277,50 @@ class IntClassifier(Classifier):
         import math
 
            
-        fs = 18 # fontsize
-        matplotlib.rcParams.update({'xtick.labelsize': fs, 'ytick.labelsize': fs,
-                 'figure.autolayout': True})
-
+        fs = 12 # fontsize
+        matplotlib.rcParams.update({'xtick.labelsize': fs,
+                                    'ytick.labelsize': fs,
+                                    'figure.autolayout': True})
         #matplotlib.rcParams.update({'figure.autolayout': True})
 
         font = {'family' : 'sans-serif',
                 'weight' : 'normal',
-                'size'   : 15}
+                'size'   : 14}
         matplotlib.rc('font', **font)
-
         matplotlib.rcParams['pdf.fonttype'] = 42
         
 
         n = self.size # number of variables
 
         lower_counts = [0] + [ 2**(n-len(cur)) for cur in passing ]
-        lower_bound = np.cumsum(lower_counts)
-
         upper_counts = [0] + [ 2**(n-len(cur)) for cur in failing ]
+
+        diff = len(lower_counts) - len(upper_counts)
+        if diff > 0: # upper_counts is shorter
+            upper_counts += [0]*diff
+        else:        # lower_counts is shorter
+            lower_counts += [0]*-diff
+
+        lower_bound = np.cumsum(lower_counts)
         upper_bound = 2**n - np.cumsum(upper_counts)
 
-
-        i=0
-        boundct=0
-        for lower_count,upper_count in zip(lower_counts,upper_counts):
-            i+=1
-            boundct += lower_count+upper_count
-            if((100*(boundct)/2**n) >= 70):
-                print("#Explatnations",i)
-                print("percentage",100*(boundct)/2**n)
+        boundct = 0
+        coverage_limit = 95
+        for i,(lower_count,upper_count) in enumerate(zip(lower_counts,upper_counts)):
+            boundct += lower_count + upper_count
+            coverage = 100*boundct/2**n
+            y_lower,y_upper = lower_bound[i],upper_bound[i]
+            if(coverage >= coverage_limit):
+                print("#Explanations",i)
+                print("percentage %.2f%%" % (coverage,))
                 break
 
-        
         #plt.yscale("log") 
-        plt.plot(np.arange(len(lower_bound)),lower_bound,color='blue',linestyle=linestyle)
-        plt.plot(np.arange(len(upper_bound)),upper_bound,color='red',linestyle=linestyle)
-        plt.axhline(lower_bound[-1], color = 'red', linestyle = '--')
-        plt.axvline(i,color = 'black', linestyle = "--")
+        plt.plot(np.arange(len(lower_bound)),lower_bound,color='blue',linestyle=linestyle,linewidth=1)
+        plt.plot(np.arange(len(upper_bound)),upper_bound,color='red',linestyle=linestyle,linewidth=1)
+        plt.axhline(lower_bound[-1],color = 'purple',linestyle = '--',linewidth=2)
+        #plt.axvline(i,color = 'black', linestyle = "--")
+        plt.plot([i,i],[y_lower,y_upper],color='black',linestyle='-',marker='o',markersize=3)
         plt.xlabel('# of explanations')
         plt.ylabel('model count')
         plt.savefig("boundsplot.pdf") 
