@@ -1275,7 +1275,8 @@ class IntClassifier(Classifier):
         import matplotlib
         import matplotlib.pyplot as plt
         import math
-        
+
+           
         fs = 18 # fontsize
         matplotlib.rcParams.update({'xtick.labelsize': fs, 'ytick.labelsize': fs,
                  'figure.autolayout': True})
@@ -1297,11 +1298,24 @@ class IntClassifier(Classifier):
 
         upper_counts = [0] + [ 2**(n-len(cur)) for cur in failing ]
         upper_bound = 2**n - np.cumsum(upper_counts)
+
+
+        i=0
+        boundct=0
+        for lower_count,upper_count in zip(lower_counts,upper_counts):
+            i+=1
+            boundct += lower_count+upper_count
+            if((100*(boundct)/2**n) >= 70):
+                print("#Explatnations",i)
+                print("percentage",100*(boundct)/2**n)
+                break
+
         
         #plt.yscale("log") 
         plt.plot(np.arange(len(lower_bound)),lower_bound,color='blue',linestyle=linestyle)
         plt.plot(np.arange(len(upper_bound)),upper_bound,color='red',linestyle=linestyle)
         plt.axhline(lower_bound[-1], color = 'red', linestyle = '--')
+        plt.axvline(i,color = 'black', linestyle = "--")
         plt.xlabel('# of explanations')
         plt.ylabel('model count')
         plt.savefig("boundsplot.pdf") 

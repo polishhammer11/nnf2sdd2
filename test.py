@@ -24,7 +24,7 @@ def create_neuron(filedir):
     train_features = dataset
     train_labels = train_features.pop("Label")
         
-    model = LogisticRegression(penalty='l1',solver='liblinear',C=.002,random_state=1) # tol=1e-8b,
+    model = LogisticRegression(penalty='l1',solver='liblinear',C=.001,random_state=1) # tol=1e-8b,
     #model = LogisticRegression(penalty='l1',solver='liblinear')
     classifier = model.fit(train_features,train_labels)
     train_accuracy = 100*classifier.score(train_features,train_labels)
