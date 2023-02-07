@@ -851,6 +851,7 @@ class IntClassifier(Classifier):
                 new_t = t-weight
                 new_setting = setting + [1]
                 child = (depth+1,new_t,new_lb,new_ub,new_setting)
+                child = IntClassifier._round_small_numbers(child) # ACACAC
                 if is_false(child):
                     false_count += 1
                     failing.append(new_setting)
@@ -862,6 +863,7 @@ class IntClassifier(Classifier):
                 new_t = t
                 new_setting = setting + [0]
                 child = (depth+1,new_t,new_lb,new_ub,new_setting)
+                child = IntClassifier._round_small_numbers(child) # ACACAC
                 if is_false(child):
                     false_count += 1
                     failing.append(new_setting)
@@ -966,6 +968,7 @@ class IntClassifier(Classifier):
                 new_t = t-weight
                 new_setting = setting + [1]
                 child = (depth+1,new_t,new_lb,new_ub,new_setting)
+                child = IntClassifier._round_small_numbers(child) # ACACAC
                 if is_false(child):
                     false_count += 1
                     failing.append(new_setting)
@@ -977,6 +980,7 @@ class IntClassifier(Classifier):
                 new_t = t
                 new_setting = setting + [0]
                 child = (depth+1,new_t,new_lb,new_ub,new_setting)
+                child = IntClassifier._round_small_numbers(child) # ACACAC
                 if is_false(child):
                     false_count += 1
                     failing.append(new_setting)
