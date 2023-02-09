@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 from circuits.linear import *
@@ -24,7 +23,7 @@ def create_neuron(filedir):
     train_features = dataset
     train_labels = train_features.pop("Label")
         
-    model = LogisticRegression(penalty='l1',solver='liblinear',C=.001,random_state=1) # tol=1e-8b,
+    model = LogisticRegression(penalty='l1',solver='liblinear',C=.0015,random_state=1) # tol=1e-8b,
     #model = LogisticRegression(penalty='l1',solver='liblinear')
     classifier = model.fit(train_features,train_labels)
     train_accuracy = 100*classifier.score(train_features,train_labels)
@@ -122,7 +121,7 @@ def voting_neuron(filedir):
 
 
 
-def neuron_search_graph(filedir,datatype):
+def neuron_search_graph(filedir,datatype,i=None,j=None):
     import matplotlib
     import matplotlib.pyplot as plt
 
@@ -205,8 +204,12 @@ def neuron_search_graph(filedir,datatype):
     #Print Graph
     if(datatype!="alld"):
         plt.show()
-
-
+    if(datatype == "alld"):
+        if i is not None and j is not None:
+            plt.title('digits (%d,%d)' % (i,j))
+            plt.savefig("digits/digits-%d-%d.png" % (i,j))
+            plt.savefig("digits/digits-%d-%d.pdf" % (i,j))
+    plt.clf()
 
 
 if __name__ == '__main__':
@@ -217,12 +220,11 @@ if __name__ == '__main__':
 
     #For all Digit Pairs
     if(datatype=="alld"):
-        for i in range(0,9):
-            for j in range(1,10):
-                if(i!=j and j>i):
-                    print(i,"-",j)
-                    digits = 'testing/digitclassification/csv/train-%d-%d.txt' % (i,j)
-                    neuron_search_graph(digits,datatype)
+        for i in range(0,10):
+            for j in range(i+1,10):
+                print(i,"-",j)
+                digits = 'testing/digitclassification/csv/train-%d-%d.txt' % (i,j)
+                neuron_search_graph(digits,datatype,i=i,j=j)
 
 
     #For One Digit Pair
