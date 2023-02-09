@@ -122,28 +122,31 @@ def voting_neuron(filedir):
 
 
 
-
-if __name__ == '__main__':
+def neuron_search_graph(filedir,datatype):
     import matplotlib
     import matplotlib.pyplot as plt
 
-    #filename = 'examples/example.neuron'
-    #congressdata = 'testing/congressionalvoting/house-votes-84.data'
-    #voting_neuron(congressdata)
-    #digitsr = 'testing/congressionalvoting/neuron/congressionalvoting.neuron'
+    if(datatype=="v"):
+        congressdata = 'testing/congressionalvoting/house-votes-84.data'
+        voting_neuron(congressdata)
+        neuron = 'testing/congressionalvoting/neuron/congressionalvoting.neuron'
     
 
-    i,j = 3,8
-    digits = 'testing/digitclassification/csv/train-%d-%d.txt' % (i,j)
-    create_neuron(digits)
-    digitsr = 'testing/digitclassification/neuron/digitclassification.neuron'
-
-
+    if(datatype=="d" or datatype=="alld"):
+        create_neuron(filedir)
+        neuron = 'testing/digitclassification/neuron/digitclassification.neuron'
     
-    #spect = 'testing/SPECT/neuron/SPECT.neuron'
-    #tictactoe = 'testing/tictactoe/neuron/tictactoe.neuron'
-    #banknote = 'testing/banknotedata/neuron/banknote.neuron'
-    c = IntClassifier.read(digitsr)
+    if(datatype=="s"):
+        spect = 'testing/SPECT/neuron/SPECT.neuron'
+        neuron = spect
+    if(datatype=="t"):
+        tictactoe = 'testing/tictactoe/neuron/tictactoe.neuron'
+        neuron = tictactoe
+    if(datatype=="b"):
+        banknote = 'testing/banknotedata/neuron/banknote.neuron'
+        neuron = banknote
+    
+    c = IntClassifier.read(neuron)
     print("=== INPUT NEURON:")
     print(c)
     
@@ -156,63 +159,36 @@ if __name__ == '__main__':
 
     
     
-    print("")
-    #obdd_manager,node = c.compile()
-    #for model in node.models():
-    #    print_model(model)
     print()
-    #print("Passing Tests")
-
-
-    #c.a_star_graph(c.a_star_search(passing), c.a_star_search_f(failing))
-    #c.breadth_first_search()
-
-
-    #c.make_image(passing,failing,digits)
-
-
-
-
-    # NEW FASTER SEARCH
+    #A Star Search
     print("SEARCH ONE:")
     passing,failing,input_map = c.a_star_search_alt()
     print("SEARCH TWO:")
     passingf,failingf,input_mapf = c.a_star_search_alt_f()
-    #import pdb
-    #pdb.set_trace()
     
-    
-                
+                   
     some_failing = [ c.set_inputs(input_map,setting) for setting in failingf[:1] ]
     some_passing = [ c.set_inputs(input_map,setting) for setting in passing[:1] ]
+
         
-    #Digits Classification Image
-    c.make_image(some_passing,some_failing,digits)
-    c.a_star_graph_alt(passing,failingf,linestyle="-")
+    #Digits Image Classification
+    if(datatype=="d"):
+        #c.make_image(some_passing,some_failing,digits)
+        print()
 
 
     #Voting Records Analysis
-    #c.voting_analysis(some_passing,some_failing)
-    #c.num_of_votes(12,congressdata)
-    #c.vote_desc(some_passing,some_failing,congressdata) 
+    if(datatype=="v"):
+        c.voting_analysis(some_passing,some_failing)
+        #c.num_of_votes(12,congressdata)
+        #c.vote_desc(some_passing,some_failing,congressdata) 
 
 
-
-    passingd=[]
-    failingd =[]
-    passingp=[]
-    failingp=[]
-    #c.a_star_graph(c.breadth_first_search(),c.breadth_first_search_f()) #passing and failing models
-
-    """
-    print("SEARCH THREE:")
-    c.print_all_true_models(passingd) #using depth-first search
-    print("SEARCH FOUR:")
-    c.print_all_false_models(failingd)#using depth-first search
-    c.print_bounds_graph(passingd,failingd) 
-    """
+    #A* Graph
+    c.a_star_graph_alt(passing,failingf,linestyle="-")
 
 
+    #Depth First Search
     print("SEARCH THREE:")
     dfs_passing,_ = c.dfs_greedy(find_true=True)
     print("SEARCH FOUR:")
@@ -220,25 +196,46 @@ if __name__ == '__main__':
     c.a_star_graph_alt(dfs_passing,dfs_failing,linestyle="-.")
 
 
-    #passing.sort(key=lambda x: x.size, reverse = True) #best case sorted passing tests
-    #failing.sort(key=lambda x: x.size, reverse = True) #best case sorted failing tests
-    #c.print_bounds_graph(passing,failing)
-    #passing.sort(key=lambda x: x.size)   #worst case sorted passing tests
-    #failing.sort(key=lambda x: x.size)   #worst case sorted failing tests
-
-
-
-    
+    #Naive Search
     print("SEARCH FIVE:")
-    """
-    c.pick_first(passingp,failingp)
-    c.pick_first_graph(passingp,failingp)
-    """
     naive_passing,naive_failing = c.dfs_naive()
     c.a_star_graph_alt(naive_passing,naive_failing,linestyle=":")
 
-    #c.print_bounds_graph(passing,failing)
-
     
+    #Print Graph
+    if(datatype!="alld"):
+        plt.show()
 
-    plt.show()
+
+
+
+if __name__ == '__main__':
+
+
+    datatype = "alld"
+
+
+    #For all Digit Pairs
+    if(datatype=="alld"):
+        for i in range(0,9):
+            for j in range(1,10):
+                if(i!=j and j>i):
+                    print(i,"-",j)
+                    digits = 'testing/digitclassification/csv/train-%d-%d.txt' % (i,j)
+                    neuron_search_graph(digits,datatype)
+
+
+    #For One Digit Pair
+    elif(datatype=="d"):
+        digits = 'testing/digitclassification/csv/train-3-8.txt'
+        neuron_search_graph(digits,datatype)
+
+    #For Congressional Voting Data
+    elif(datatype=="v"):
+        congressdata = 'testing/congressionalvoting/house-votes-84.data'
+        neuron_search_graph(congressdata,datatype)
+
+    #For Other Data
+    else:
+        neuron_search_graph("sdf",datatype)
+            
