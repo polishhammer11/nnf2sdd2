@@ -1160,100 +1160,60 @@ class IntClassifier(Classifier):
         #plt.show()
 
             
-    def make_image(self,passing,failing,filedir):
+    def make_image(self,image,label,passing,failing,image_filename=None):
         import numpy as np
         import matplotlib
         from matplotlib import pyplot as plt
-        #import pdb
-        #pdb.set_trace()
-        
 
         fs = 18 # fontsize
-        matplotlib.rcParams.update({'xtick.labelsize': fs, 'ytick.labelsize': fs,
-                 'figure.autolayout': True})
-
-        #matplotlib.rcParams.update({'figure.autolayout': True})
-
+        matplotlib.rcParams.update({'xtick.labelsize': fs, 
+                                    'ytick.labelsize': fs,
+                                    'figure.autolayout': True})
         font = {'family' : 'sans-serif',
                 'weight' : 'normal',
                 'size'   : 15}
         matplotlib.rc('font', **font)
-
         plt.tick_params(left = False, right = False , labelleft = False ,
                         labelbottom = False, bottom = False)
-  
 
-
-        with open(filedir, 'r') as f:
-            digit = f.readlines()[5].split(',')
-        digit = [int(x) for x in digit]
-        label = digit.pop()
-        digit = np.array(digit)
-        
-        '''
-        x = 2
+        found = False
         if label == 1:
-            passing[x].remove_nonreducing()
-            shortest = list(passing[x].inputs.setting.keys())
-            shortestval = list(passing[x].inputs.setting.values())
-            for i in range(len(shortest)):
-                if shortestval[i][0] == 1:
-                    digit[shortest[i]] = 2
-                if shortestval[i][0] == 0:
-                    digit[shortest[i]] = -1
-                else:
-                    continue
-            digit = digit.reshape(28,28)
-            plt.imshow(digit, cmap='gray')
-            plt.savefig('img.png')
-       
-        if label == 0:
-            if(len(failing)>0):
-               failing[x].remove_nonreducing_f()
-               shortest = list(failing[x].inputs.setting.keys())
-               shortestval = list(failing[x].inputs.setting.values())
-               for i in range(len(shortest)):
-                   if shortestval[i][0] == 1:
-                       digit[shortest[i]] = 2
-                   if shortestval[i][0] == 0:
-                       digit[shortest[i]] = -1
-                   else:
-                       continue '''
-    
-        if label == 1:
-            for i in range(len(passing)):
-                passing[i].remove_nonreducing()
-                shortest = list(passing[i].inputs.setting.keys())
-                shortestval = list(passing[i].inputs.setting.values())
-                for i in range(len(shortest)):
-                    if shortestval[i][0] == 1:
-                        digit[shortest[i]] = 2
-                    if shortestval[i][0] == 0:
-                        digit[shortest[i]] = -1
-                else:
-                    continue
-            digit = digit.reshape(28,28)
-            plt.imshow(digit, cmap='gray', vmin=-1, vmax=2)
-            plt.savefig('digit.pdf')
+            for leaf in passing:
+                leaf.remove_nonreducing()
+                if not leaf.is_consistent(image): continue
+                for var,(val,w) in leaf.inputs.setting.items():
+                    image[var] = 2 if val == 1 else -1
+                found = True
+                break
      
         if label == 0:
-            for i in range(len(failing)):
-                failing[i].remove_nonreducing_f()
-                shortest = list(failing[i].inputs.setting.keys())
-                shortestval = list(failing[i].inputs.setting.values())
-                for i in range(len(shortest)):
-                    if shortestval[i][0] == 1:
-                        digit[shortest[i]] = 2
-                    if shortestval[i][0] == 0:
-                        digit[shortest[i]] = -1
-                else:
-                    continue
-            digit = digit.reshape(28,28)
-            plt.imshow(digit, cmap='gray', vmin=-1, vmax=2)
-            plt.savefig('digit.pdf')
-        plt.show()
-            
-            
+            for leaf in failing:
+                leaf.remove_nonreducing_f()
+                if not leaf.is_consistent(image): continue
+                for var,(val,w) in leaf.inputs.setting.items():
+                    image[var] = 2 if val == 1 else -1
+                found = True
+                break
+
+        if found is False:
+            print("warning: consistent leaf not found")
+
+        image = image.reshape(28,28)
+        plt.imshow(image, cmap='gray', vmin=-1, vmax=2)
+        if image_filename:
+            plt.savefig(image_filename + ".pdf")
+            plt.savefig(image_filename + ".png")
+        #plt.show()
+        plt.clf()
+
+    def is_consistent(self,instance):
+        setting = self.inputs.setting
+        for var in setting:
+            val,w = setting[var]
+            if instance[var] != val:
+                return False
+        return True
+
     def remove_nonreducing(self):
         valarr = list(self.inputs.setting.values())
         keyarr = list(self.inputs.setting.keys())

@@ -23,7 +23,7 @@ def create_neuron(filedir):
     train_features = dataset
     train_labels = train_features.pop("Label")
         
-    model = LogisticRegression(penalty='l1',solver='liblinear',C=.0015,random_state=1) # tol=1e-8b,
+    model = LogisticRegression(penalty='l1',solver='liblinear',C=.002,random_state=1) # tol=1e-8b,
     #model = LogisticRegression(penalty='l1',solver='liblinear')
     classifier = model.fit(train_features,train_labels)
     train_accuracy = 100*classifier.score(train_features,train_labels)
@@ -118,8 +118,34 @@ def voting_neuron(filedir):
     file1.write("\nthreshold: ")
     file1.write(str(-model.intercept_[0]))
 
+def test_neuron(c,train_filename):
+    import numpy as np
+    import pandas as pd
 
+    dataset = pd.read_csv(train_filename)
+    train_features = dataset
+    dataset.columns = [*dataset.columns[:-1], 'Label']
+    train_features = dataset
+    train_labels = train_features.pop("Label")
 
+    A = np.array(train_features)
+    y = np.array(train_labels)
+    w = np.array(c.weights)
+    b = np.array(-c.threshold) 
+    acc = sum((A@w > -b).flatten() == y)/len(y)
+    print("       my accuracy: %.8f%%" % (100*acc,))
+
+    prs = A@w + b
+    labels = np.array(train_labels)
+    indices = []
+    indices.append(np.argmax(prs*labels))
+    indices.append(np.argmin(prs*labels))
+    labels = 1-labels # flip
+    indices.append(np.argmin(prs*labels))
+    indices.append(np.argmax(prs*labels))
+    print("indices: ", indices)
+    labels = [1,0,0,1]
+    return indices,labels
 
 def neuron_search_graph(filedir,datatype,i=None,j=None):
     import matplotlib
@@ -148,6 +174,9 @@ def neuron_search_graph(filedir,datatype,i=None,j=None):
     c = IntClassifier.read(neuron)
     print("=== INPUT NEURON:")
     print(c)
+
+    print("=== TESTING NEURON:")
+    indices,labels = test_neuron(c,filedir)
     
     #assert c.is_integer
     passing = []
@@ -164,20 +193,33 @@ def neuron_search_graph(filedir,datatype,i=None,j=None):
     passing,failing,input_map = c.a_star_search_alt()
     print("SEARCH TWO:")
     passingf,failingf,input_mapf = c.a_star_search_alt_f()
-    
-                   
-    some_failing = [ c.set_inputs(input_map,setting) for setting in failingf[:1] ]
-    some_passing = [ c.set_inputs(input_map,setting) for setting in passing[:1] ]
+    print("#passing/failing: %d,%d" % (len(passing),len(failingf)))
 
         
     #Digits Image Classification
-    if(datatype=="d"):
-        #c.make_image(some_passing,some_failing,digits)
-        print()
+    if(datatype=="d" or datatype == "alld"):
+        import numpy as np
+        import pandas as pd
 
+        passc = [ c.set_inputs(input_map,s) for s in passing[:10] ]
+        failc = [ c.set_inputs(input_mapf,s) for s in failingf[:10] ]
+
+
+        #with open(filedir, 'r') as f:
+        #    images = f.readlines()
+        dataset = pd.read_csv(filedir)
+        images = np.array(dataset)
+
+        for index,label in zip(indices,labels):
+            image = images[index]
+            image,image_label = image[:-1],image[-1]
+            image_filename = "digits/digit-%d-%d-i%d-l%d" % (i,j,index,label)
+            c.make_image(image,label,passc,failc,image_filename)
 
     #Voting Records Analysis
     if(datatype=="v"):
+        some_failing = [ c.set_inputs(input_map,s) for s in failingf[:1] ]
+        some_passing = [ c.set_inputs(input_map,s) for s in passing[:1] ]
         c.voting_analysis(some_passing,some_failing)
         #c.num_of_votes(12,congressdata)
         #c.vote_desc(some_passing,some_failing,congressdata) 
@@ -193,17 +235,18 @@ def neuron_search_graph(filedir,datatype,i=None,j=None):
     print("SEARCH FOUR:")
     _,dfs_failing = c.dfs_greedy(find_true=False)
     c.a_star_graph_alt(dfs_passing,dfs_failing,linestyle="-.")
-
+    print("#passing/failing: %d,%d" % (len(dfs_passing),len(dfs_failing)))
 
     #Naive Search
     print("SEARCH FIVE:")
     naive_passing,naive_failing = c.dfs_naive()
     c.a_star_graph_alt(naive_passing,naive_failing,linestyle=":")
-
+    print("#passing/failing: %d,%d" % (len(naive_passing),len(naive_failing)))
     
     #Print Graph
     if(datatype!="alld"):
         plt.show()
+        pass
     if(datatype == "alld"):
         if i is not None and j is not None:
             plt.title('digits (%d,%d)' % (i,j))
@@ -229,8 +272,9 @@ if __name__ == '__main__':
 
     #For One Digit Pair
     elif(datatype=="d"):
-        digits = 'testing/digitclassification/csv/train-3-8.txt'
-        neuron_search_graph(digits,datatype)
+        i,j = 0,1
+        digits = 'testing/digitclassification/csv/train-%d-%d.txt' % (i,j)
+        neuron_search_graph(digits,datatype,i=i,j=j)
 
     #For Congressional Voting Data
     elif(datatype=="v"):
