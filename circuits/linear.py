@@ -1384,35 +1384,71 @@ class IntClassifier(Classifier):
         #plt.show()
 
 
-    def num_of_votes(self,num,filedir):
-        #import pdb
-        #pdb.set_trace()
+    def num_of_votes(self,filedir):
         with open(filedir, "r") as file:
             lines = file.readlines()
         lines = [line.rstrip().split(",") for line in lines]
 
         repy = 0
         repn = 0
+        repq = 0
         demy = 0
         demn = 0
-        for subarray in lines:
-            if(subarray[0] == 'republican'):
-                if(subarray[num] == 'y'):
-                    repy += 1
-                if(subarray[num] == 'n'):
-                    repn += 1
-            if(subarray[0] == 'democrat'):
-                if(subarray[num] == 'y'):
-                    demy += 1
-                if(subarray[num] == 'n'):
-                    demn += 1
+        demq = 0
+        votingtotals = {}
+        for x in range(1,17):
+            for subarray in lines:
+                if(subarray[0] == 'republican'):
+                    if(subarray[x] == 'y'):
+                        repy += 1
+                    if(subarray[x] == 'n'):
+                        repn += 1
+                    if(subarray[x] == '?'):
+                        repq += 1
+                if(subarray[0] == 'democrat'):
+                    if(subarray[x] == 'y'):
+                        demy += 1
+                    if(subarray[x] == 'n'):
+                        demn += 1
+                    if(subarray[x] == '?'):
+                        demq += 1
+            #import pdb
+            #pdb.set_trace()
+            votingtotals[x] = repy,repn,repq,demy,demn,demq
+            repy,repn,repq,demy,demn,demq = 0,0,0,0,0,0
                 
         print("republican y:",repy)
         print("republican n:",repn)
+        print("republican ?:",repq)
         print("democrat y:",demy)
         print("democrat n:",demn)
-                    
-                    
+        print("democrat ?:",demq)
+
+
+        with open('testing/congressionalvoting/votingtotals.tex','w') as file:
+            headers = ["RY","RN","R?","DY","DN","D?"]
+            texttabular = f"l||{'r|'*len(headers)}"
+            textheader = "bill & " + " & ".join(headers) + "\\\\"
+            textdata = "\\hline"
+            data = dict()
+            for x in range(1,17):
+                data[x] = votingtotals[x]
+
+            for label in data:
+                textdata += f"{label} & {' & '.join(map(str,data[label]))} \\\\\n"
+        
+            file.write("\\begin{table}[t]")
+            file.write("\\centering")
+            file.write("\\small")
+            file.write("\\setlength{\\tabcolsep}{2pt}")
+            file.write("\\caption{1984 Congressional Voting Totals} \label{table:voting2}")
+            file.write("\\begin{tabular}{"+texttabular+"}\n")
+            file.write(textheader)
+            file.write(textdata)
+            file.write("\\end{tabular}")
+            file.write("\\end{table}")
+                  
+            
 
 
 

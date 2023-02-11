@@ -174,9 +174,10 @@ def neuron_search_graph(filedir,datatype,i=None,j=None):
     c = IntClassifier.read(neuron)
     print("=== INPUT NEURON:")
     print(c)
-
-    print("=== TESTING NEURON:")
-    indices,labels = test_neuron(c,filedir)
+    
+    if(datatype=="d" or datatype=="alld"):
+        print("=== TESTING NEURON:")
+        indices,labels = test_neuron(c,filedir)
     
     #assert c.is_integer
     passing = []
@@ -221,7 +222,7 @@ def neuron_search_graph(filedir,datatype,i=None,j=None):
         some_failing = [ c.set_inputs(input_map,s) for s in failingf[:1] ]
         some_passing = [ c.set_inputs(input_map,s) for s in passing[:1] ]
         c.voting_analysis(some_passing,some_failing)
-        #c.num_of_votes(12,congressdata)
+        #c.num_of_votes(congressdata)
         #c.vote_desc(some_passing,some_failing,congressdata) 
 
 
@@ -258,7 +259,7 @@ def neuron_search_graph(filedir,datatype,i=None,j=None):
 if __name__ == '__main__':
 
 
-    datatype = "alld"
+    datatype = "v"
 
 
     #For all Digit Pairs
