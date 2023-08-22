@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import math
+import itertools
 from itertools import accumulate
+from itertools import product
 from decimal import Decimal
 
 from .obdd import ObddManager, ObddNode
@@ -193,9 +195,7 @@ class Classifier:
         str(self.size)
         self.weights = intweight
 
-
-        
-        
+           
     def fastmove(self):
         intweights = [float(x) for x in self.weights]
         intweights2 = [float(x) for x in self.weights]
@@ -1447,9 +1447,253 @@ class IntClassifier(Classifier):
             file.write(textdata)
             file.write("\\end{tabular}")
             file.write("\\end{table}")
-                  
-            
 
+    def bounds_graphs(self, passing, failing, passing2, failing2, c, d, tt):
+        import numpy as np
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from functools import reduce
+
+        n = self.size
+        passing, failing = c.latex_truth_table(passing, failing)
+        passing2, failing2 = d.latex_truth_table(passing2, failing2)
+
+        passing.insert(0, [])
+        failing.insert(0, [])
+        passing2.insert(0, [])
+        failing2.insert(0, [])
+
+        innerboundtt = c.inner_bound_tt()  # truth table of first neuron with all outputs set to 0
+        innerboundtt2 = d.inner_bound_tt()  # truth table of second neuron with all outputs set to 0
+
+        count = 0
+        count2 = 0
+        countones = np.zeros((len(passing), len(passing2)))  # numpy 2d array
+
+        for count, PI in enumerate(passing):  # iterates through prime implicants of the first neuron
+            for item in PI:
+                i = reduce(lambda x, y: 2 * x + y, item, 0)
+                innerboundtt[i][-1] = 1
+            for count2, PI2 in enumerate(passing2):  # iterates through prime implicants of second neuron
+                for item2 in PI2:  # iterates through all possible settings of the implicant
+                    i = reduce(lambda x, y: 2 * x + y, item2, 0)
+                    innerboundtt2[i][-1] = 1
+                result = self.tt_or(innerboundtt,
+                                         innerboundtt2)  # uses tt_and function to compute the and of the two neurons
+                countones[count][count2] = (
+                    sum(1 for num in result if num == 1))  # counts the number of 1s in truth table
+            innerboundtt2 = d.inner_bound_tt()  # sets all tt outputs to 0
+
+        # print(countones)
+        size = len(passing)
+        size2 = len(passing2)
+        Y = np.arange(size)
+        X = np.arange(size2)
+        X, Y = np.meshgrid(X, Y)
+        Z = countones
+
+        print(X)
+        print(Y)
+        print(Z)
+
+
+        ax = plt.figure().add_subplot(projection='3d')
+        fs = 12  # fontsize
+        matplotlib.rcParams.update({'xtick.labelsize': fs,
+                                    'ytick.labelsize': fs,
+                                    'figure.autolayout': True})
+        # matplotlib.rcParams.update({'figure.autolayout': True})
+
+        font = {'family': 'sans-serif',
+                'weight': 'normal',
+                'size': 14}
+        matplotlib.rc('font', **font)
+        matplotlib.rcParams['pdf.fonttype'] = 42
+
+        surf = ax.plot_surface(X, Y, Z,
+                               linewidth=0, antialiased=False)
+        ax.set_xlabel('#PI N1')
+        ax.set_ylabel('#PI N2')
+        ax.set_zlabel('1 output')
+
+        plt.show()
+
+    def truth_table(self):
+
+        # import pdb; pdb.set_trace()
+        num_inputs = len(self.weights)
+        inputs = list(itertools.product([0, 1], repeat=num_inputs))
+
+        def function(*args):
+            weighted_sum = sum(w * i for w, i in zip(self.weights, args))
+            return weighted_sum >= self.threshold
+
+        header = '\t'.join(str(self.weights[i]) for i in range(num_inputs)) + " Output"
+        # print(header)
+
+        table = []
+
+        for input_values in inputs:
+            output = function(*input_values)
+            if output == True:
+                input_val = input_values + (1,)
+                table.append(input_val)
+            else:
+                input_val = input_values + (0,)
+                table.append(input_val)
+
+        return table
+
+
+    def outer_bound_tt(self):
+        num_inputs = len(self.weights)
+        inputs = list(itertools.product([0, 1], repeat=num_inputs))
+
+        table = []
+
+        for input_values in inputs:
+            input_val = input_values + (1,)
+            table.append(list(input_val))
+
+        return table
+
+    def inner_bound_tt(self):
+        num_inputs = len(self.weights)
+        inputs = list(itertools.product([0, 1], repeat=num_inputs))
+
+        table = []
+
+        for input_values in inputs:
+            input_val = input_values + (0,)
+            table.append(list(input_val))
+
+        return table
+
+    def tt_and(self, c, d):
+
+        ttand = []
+        for b1, b2 in zip(c, d): ttand.append(b1[-1] and b2[-1])
+        return ttand
+
+    def tt_or(self, c, d):
+
+        ttand = []
+        for b1, b2 in zip(c, d): ttand.append(b1[-1] or b2[-1])
+        return ttand
+
+    def latex_truth_table(self,passing,failing):
+        #import pdb; pdb.set_trace()
+        truthtablep = []
+        for item in passing:
+            ttp = [None] * len(self.inputs.weights)
+            for key,value in item.inputs.weights.items():
+                ttp[key] = (0, 1)
+            for key,value in item.inputs.setting.items():
+                ttp[key]= (value[0], )
+            truthtablep.append(list(product(*ttp)))
+        truthtablef = []
+        for item in failing:
+            ttf = [None] * len(self.inputs.weights)
+            for key,value in item.inputs.weights.items():
+                ttf[key] = (0, 1)
+            for key,value in item.inputs.setting.items():
+                ttf[key]= (value[0], )
+            truthtablef.append(list(product(*ttf)))
+
+        return truthtablep,truthtablef
+
+        self.truth_table_latex(passing,failing,truthtablep,truthtablef)
+
+    def truth_table_latex(self,passing,failing,ttp,ttf):
+        #import pdb; pdb.set_trace()
+
+        num_cols = self.size
+        num_rows = len(ttp)
+
+        #first = list(product(*ttp[0]))
+        #print(first)
+        #print(ttp)
+
+
+
+        latex = r'''\documentclass{article}
+\begin{document}
+\begin{center}
+\small'''
+
+        prevrow = '    '
+        for element in ttp:
+            latex += r'''
+\begin{tabular}{''' + 'c' * num_cols + r'''|c}
+'''
+
+
+            header_line = ''
+            for i in range(0, num_cols):
+                header_line += f'$I_{i}$ & '
+            header_line += r'$f$ \\\hline'
+            latex += header_line + '\n'
+
+            row = '    '
+            row += prevrow
+            for item in element:
+                for cell_data in item:
+                    row += ' \\textbf{' + str(cell_data) + '}'
+                    row += ' & '
+                    prevrow += str(cell_data)
+                    prevrow += ' & '
+                row += '1 \\\\\n'
+                prevrow+='1 \\\\\n'
+            latex += row
+            row = '    '
+
+            latex += r'''\end{tabular}
+\quad\quad'''
+        latex += r'''
+\end{center}
+'''
+
+        latex+= r'''
+\begin{center}
+\small
+'''
+
+        prevrow = '    '
+        for element in ttf:
+            latex += r'''
+\begin{tabular}{''' + 'c' * num_cols + r''' | c}
+'''
+            header_line = ''
+            for i in range(0, num_cols):
+                header_line += f'$I_{i}$ & '
+            header_line += r'$f$ \\\hline'
+            latex += header_line + '\n'
+
+            row = '    '
+            row += prevrow
+            for item in element:
+                for cell_data in item:
+                    row += ' \\textbf{' + str(cell_data) + '}'
+                    row += ' & '
+                    prevrow += str(cell_data)
+                    prevrow += ' & '
+                row += '0 \\\\\n'
+                prevrow+='0 \\\\\n'
+            latex += row
+            row = '    '
+
+            latex += r'''\end{tabular}
+\quad\quad'''
+        latex += r'''
+\end{center}
+'''
+
+        latex += r'''\end{document}'''
+
+
+
+        with open("truth_table.tex", "w") as f:
+                f.write(latex)
 
 
 
